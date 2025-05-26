@@ -66,7 +66,96 @@ def admin_dashboard():
 
 @app.route('/admin/manage-accounts')
 def manage_accounts():
-    return 'Gestion des comptes (à implémenter)'
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    # loginRequest
+    cursor.execute('SELECT * FROM loginRequest')
+    login_requests = cursor.fetchall()
+    login_request_columns = [
+        ('nom', 'Nom'),
+        ('email', 'Email'),
+        ('phone', 'Téléphone'),
+        ('roles', 'Rôle'),
+        ('class', 'Classe'),
+        ('speciality', 'Spécialité'),
+        ('mdp', 'Mot de passe (non haché)')
+    ]
+    # Users
+    cursor.execute('SELECT * FROM Users')
+    users = cursor.fetchall()
+    users_columns = [
+        ('idUser', 'ID'),
+        ('nom', 'Nom'),
+        ('email', 'Email'),
+        ('phone', 'Téléphone'),
+        ('roles', 'Rôle'),
+        ('class', 'Classe'),
+        ('speciality', 'Spécialité')
+    ]
+    admin_id = session.get('user_id')
+    return render_template('admin/manageAccounts/index.html',
+        login_requests=login_requests,
+        login_request_columns=login_request_columns,
+        users=users,
+        users_columns=users_columns,
+        admin_id=admin_id)
+
+from flask import abort
+
+@app.route('/admin/validate-request/<int:req_id>', methods=['POST'])
+def validate_request(req_id):
+    if session.get('role') != 'admin':
+        abort(403)
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM loginRequest WHERE idRequest = %s', (req_id,))
+    req = cursor.fetchone()
+    if not req:
+        return jsonify({'success': False, 'message': 'Demande introuvable.'})
+    # Vérifier unicité email/phone
+    cursor.execute('SELECT * FROM Users WHERE email = %s OR phone = %s', (req['email'], req['phone']))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Email ou téléphone déjà utilisé.'})
+    # Insérer dans Users (hachage du mdp)
+    mdp_hash = generate_password_hash(req['mdp'])
+    cursor.execute('INSERT INTO Users (nom, email, mdp, phone, roles, class, speciality) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+        (req['nom'], req['email'], mdp_hash, req['phone'], req['roles'], req['class'], req['speciality']))
+    cursor.execute('DELETE FROM loginRequest WHERE idRequest = %s', (req_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Utilisateur validé et ajouté.'})
+
+@app.route('/admin/delete-request/<int:req_id>', methods=['POST'])
+def delete_request(req_id):
+    if session.get('role') != 'admin':
+        abort(403)
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM loginRequest WHERE idRequest = %s', (req_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Demande supprimée.'})
+
+@app.route('/admin/delete-user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    if session.get('role') != 'admin':
+        abort(403)
+    if user_id == session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Impossible de supprimer votre propre compte !'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT roles FROM Users WHERE idUser = %s', (user_id,))
+    user = cursor.fetchone()
+    if not user:
+        return jsonify({'success': False, 'message': 'Utilisateur introuvable.'})
+    role = user['roles']
+    if role == 'teacher':
+        cursor.execute('DELETE FROM Courses WHERE idTeacher = %s', (user_id,))
+        cursor.execute('DELETE FROM Exams WHERE idTeacher = %s', (user_id,))
+        cursor.execute('DELETE FROM Questions WHERE idResponder = %s', (user_id,))
+        cursor.execute('DELETE FROM onlineSessions WHERE idTeacher = %s', (user_id,))
+    elif role == 'student':
+        cursor.execute('DELETE FROM Submissions WHERE idStudent = %s', (user_id,))
+        cursor.execute('DELETE FROM Questions WHERE idStudent = %s', (user_id,))
+    cursor.execute('DELETE FROM Users WHERE idUser = %s', (user_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Utilisateur supprimé.'})
 
 @app.route('/admin/manage-content')
 def manage_content():

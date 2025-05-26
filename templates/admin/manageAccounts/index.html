@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des comptes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Demandes d'inscription en attente</h2>
+            <div class="table-responsive">
+                <table id="loginRequestTable">
+                    <thead>
+                        <tr>
+                            {% for col, title in login_request_columns %}
+                            <th onclick="sortTable('loginRequestTable', {{ loop.index0 }})">{{ title }}</th>
+                            {% endfor %}
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in login_requests %}
+                        <tr>
+                            {% for col, title in login_request_columns %}
+                            <td>{{ req[col] }}</td>
+                            {% endfor %}
+                            <td class="action-btns">
+                                <button class="btn btn-primary" onclick="validateRequest({{ req['idRequest'] }})">Valider</button>
+                                <button class="btn btn-secondary" onclick="deleteRequest({{ req['idRequest'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="table-container">
+            <h2>Utilisateurs</h2>
+            <div class="table-responsive">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            {% for col, title in users_columns %}
+                            <th onclick="sortTable('usersTable', {{ loop.index0 }})">{{ title }}</th>
+                            {% endfor %}
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            {% for col, title in users_columns %}
+                            <td>{{ user[col] }}</td>
+                            {% endfor %}
+                            <td class="action-btns">
+                                <button class="btn btn-secondary {% if user['idUser'] == admin_id %}disabled{% endif %}" onclick="deleteUser({{ user['idUser'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p id="manageAccountsMessage" class="error-message"></p>
+    </main>
+    <script src="{{ url_for('static', filename='manageAccounts.js') }}"></script>
+</body>
+</html>

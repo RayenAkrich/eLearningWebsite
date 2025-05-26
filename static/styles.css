@@ -160,7 +160,6 @@ body.login-page {
     color: #d32f2f;
     font-size: 0.9rem;
     margin-top: 1rem;
-    display: none;
 }
 
 .footer {
@@ -174,6 +173,26 @@ body.login-page {
     margin: 0;
     font-size: 1rem;
 }
+
+/* Table and Main Form Styles */
+.table-container {
+    background: rgba(218, 218, 223, 0.85);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; background: #f4f6fb; }
+th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+th { background: #f4c430; color: #004aad; cursor: pointer; }
+tr:nth-child(even) { background: #f9f9f9; }
+.action-btns button { margin-right: 0.5rem; }
+.disabled { opacity: 0.5; pointer-events: none; }
+main.form-main { min-height: 100vh; padding: 2rem 0; background: #f4f6fb; }
+h2 { color: #004aad; margin-top: 0; }
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -198,4 +217,8 @@ body.login-page {
     .form-buttons {
         flex-direction: column;
     }
+}
+@media (max-width: 900px) {
+    .table-container { padding: 0.5rem; }
+    table { font-size: 0.95rem; }
 }
