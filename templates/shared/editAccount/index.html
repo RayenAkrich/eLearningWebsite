@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier mon compte</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login-signup.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for(role + '_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section class="login-section">
+        <div class="login-container">
+            <h2>Modifier mon compte</h2>
+            <form id="editAccountForm" class="form" method="post" autocomplete="off">
+                <div class="form-group">
+                    <label for="nom">Nom</label>
+                    <input type="text" id="nom" name="nom" value="{{ user.nom }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Téléphone</label>
+                    <input type="text" id="phone" name="phone" value="{{ user.phone }}" maxlength="8" pattern="\d{8}" required>
+                </div>
+                <div class="form-group">
+                    <label for="old_mdp">Ancien mot de passe</label>
+                    <input type="password" id="old_mdp" name="old_mdp" required>
+                </div>
+                <div class="form-group checkbox">
+                    <input type="checkbox" id="show-old-password">
+                    <label for="show-old-password">Afficher l'ancien mot de passe</label>
+                </div>
+                <div class="form-group">
+                    <label for="new_mdp">Nouveau mot de passe</label>
+                    <input type="password" id="new_mdp" name="new_mdp">
+                </div>
+                <div class="form-group checkbox">
+                    <input type="checkbox" id="show-new-password">
+                    <label for="show-new-password">Afficher le nouveau mot de passe</label>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                    <button type="reset" class="btn btn-secondary">Réinitialiser</button>
+                </div>
+                <p id="editAccountMessage" class="error-message"></p>
+            </form>
+        </div>
+    </section>    
+    <footer class="footer">
+        <p>© 2025 by Rayen Akriche. Tous droits réservés.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='editAccount.js') }}"></script>
+</body>
+</html>

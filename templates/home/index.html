@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil - Plateforme d'Apprentissage en Ligne</title>
-    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,8 +15,8 @@
         </div>
         <nav>
             <ul class="nav-links">
-                <li><a href="../auth/login/index.html" class="btn btn-secondary">Connexion</a></li>
-                <li><a href="../auth/signup/index.html" class="btn btn-primary">Inscription</a></li>
+                <li><a href="{{ url_for('login') }}" class="btn btn-secondary">Connexion</a></li>
+                <li><a href="{{ url_for('signup') }}" class="btn btn-primary">Inscription</a></li>
             </ul>
         </nav>
     </header>
@@ -27,8 +27,8 @@
             <h1>Bienvenue sur notre plateforme d'apprentissage en ligne</h1>
             <p>Apprenez, enseignez, et collaborez où que vous soyez avec des cours interactifs, des sessions en ligne, et bien plus.</p>
             <div class="hero-buttons">
-                <a href="../auth/signup/index.html" class="btn btn-primary">Commencer maintenant</a>
-                <a href="../auth/login/index.html" class="btn btn-secondary">Se connecter</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-primary">Commencer maintenant</a>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Se connecter</a>
             </div>
         </div>
     </section>
@@ -52,5 +52,6 @@
     <footer class="footer">
         <p>&copy; 2025 by Rayen Akriche. Tous droits réservés.</p>
     </footer>
+
 </body>
 </html>

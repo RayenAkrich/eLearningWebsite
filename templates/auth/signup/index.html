@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Plateforme d'Apprentissage en Ligne</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login-signup.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <h1>eLearning</h1>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}" class="btn btn-secondary">Accueil</a></li>
+                <li><a href="{{ url_for('login') }}" class="btn btn-primary">Connexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section class="login-section">
+        <div class="login-container">
+            <h2>Inscription</h2>
+            <form id="signup-form" autocomplete="off" method="post" action="javascript:void(0);">
+                <div class="form-group">
+                    <label for="nom">Nom</label>
+                    <input type="text" id="nom" name="nom" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Téléphone</label>
+                    <input type="text" id="phone" name="phone" required maxlength="8" pattern="\d{8}">
+                </div>
+                <div class="form-group">
+                    <label for="mdp">Mot de passe</label>
+                    <input type="password" id="mdp" name="mdp" required>
+                </div>
+                                <div class="form-group checkbox">
+                    <input type="checkbox" id="show-password">
+                    <label for="show-password">Afficher le mot de passe</label>
+                </div>
+                <div class="form-group">
+                    <label for="roles">Rôle</label>
+                    <select id="roles" name="roles" required>
+                        <option value="">Choisir un rôle</option>
+                        <option value="student">Étudiant</option>
+                        <option value="teacher">Enseignant</option>
+                    </select>
+                </div>
+                <div class="form-group" id="class-group" style="display:none;">
+                    <label for="class">Classe</label>
+                    <input type="text" id="class" name="class">
+                </div>
+                <div class="form-group" id="speciality-group" style="display:none;">
+                    <label for="speciality">Spécialité</label>
+                    <input type="text" id="speciality" name="speciality">
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Soumettre</button>
+                    <button type="reset" class="btn btn-secondary">Réinitialiser</button>
+                </div>
+            </form>
+            <p id="error-message" class="error-message"></p>
+        </div>
+    </section>
+    <footer class="footer">
+        <p>© 2025 by Rayen Akriche. Tous droits réservés.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='signup.js') }}"></script>
+</body>
+</html>

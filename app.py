@@ -1,0 +1,248 @@
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask_mysqldb import MySQL
+from werkzeug.security import check_password_hash, generate_password_hash
+import MySQLdb.cursors
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
+
+# Config MySQL
+app.config['MYSQL_HOST'] = '127.0.0.1'
+app.config['MYSQL_PORT'] = 3306
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = '123456'  
+app.config['MYSQL_DB'] = 'elearningdb'
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+mysql = MySQL(app)
+
+@app.route('/')
+def home():
+    return render_template('home/index.html')
+
+@app.route('/template/auth/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('auth/login/login.html')
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM Users WHERE email = %s', (email,))
+    user = cursor.fetchone()
+    if user and check_password_hash(user['mdp'], password):
+        session['user_id'] = user['idUser']
+        session['role'] = user['roles']
+        return jsonify({'success': True, 'role': user['roles']})
+    return jsonify({'success': False, 'message': 'Email ou mot de passe incorrect.'})
+
+@app.route('/template/auth/admin/dashboard')
+def admin_dashboard():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT COUNT(*) as users FROM Users')
+    users = cursor.fetchone()['users']
+    cursor.execute('SELECT COUNT(*) as courses FROM Courses')
+    courses = cursor.fetchone()['courses']
+    cursor.execute('SELECT COUNT(*) as questions FROM Questions')
+    questions = cursor.fetchone()['questions']
+    cursor.execute('SELECT COUNT(*) as exams FROM Exams')
+    exams = cursor.fetchone()['exams']
+    cursor.execute('SELECT COUNT(*) as sessions FROM onlineSessions')
+    sessions = cursor.fetchone()['sessions']
+    cursor.execute('SELECT COUNT(*) as pending FROM loginRequest')
+    pending = cursor.fetchone()['pending']
+    stats = {
+        'users': users,
+        'courses': courses,
+        'questions': questions,
+        'exams': exams,
+        'sessions': sessions,
+        'pending': pending
+    }
+    return render_template('admin/adminDashboard/dashboard.html', stats=stats)
+
+@app.route('/admin/manage-accounts')
+def manage_accounts():
+    return 'Gestion des comptes (à implémenter)'
+
+@app.route('/admin/manage-content')
+def manage_content():
+    return 'Gestion du contenu (à implémenter)'
+
+@app.route('/admin/manage-sessions')
+def manage_sessions():
+    return 'Gestion des séances (à implémenter)'
+
+@app.route('/admin/edit-account')
+def admin_edit_account():
+    return redirect(url_for('edit_account'))
+
+@app.route('/template/auth/teacher/dashboard')
+def teacher_dashboard():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    teacher_id = session.get('user_id')
+    cursor.execute('SELECT COUNT(*) as courses FROM Courses WHERE idTeacher = %s', (teacher_id,))
+    courses = cursor.fetchone()['courses']
+    cursor.execute('SELECT COUNT(*) as exams FROM Exams WHERE idTeacher = %s', (teacher_id,))
+    exams = cursor.fetchone()['exams']
+    cursor.execute('SELECT COUNT(*) as pending_questions FROM Questions WHERE speciality = (SELECT speciality FROM Users WHERE idUser = %s) AND response IS NULL', (teacher_id,))
+    pending_questions = cursor.fetchone()['pending_questions']
+    cursor.execute('SELECT COUNT(*) as sessions FROM onlineSessions WHERE idTeacher = %s', (teacher_id,))
+    sessions = cursor.fetchone()['sessions']
+    stats = {
+        'courses': courses,
+        'exams': exams,
+        'pending_questions': pending_questions,
+        'sessions': sessions
+    }
+    return render_template('teacher/teacherDashboard/dashboard.html', stats=stats)
+
+@app.route('/teacher/manage-exams')
+def teacher_manage_exams():
+    return 'Gestion des devoirs (à implémenter)'
+
+@app.route('/teacher/manage-lessons')
+def teacher_manage_lessons():
+    return 'Gestion des cours (à implémenter)'
+
+@app.route('/teacher/manage-questions')
+def teacher_manage_questions():
+    return 'Gestion des questions (à implémenter)'
+
+@app.route('/teacher/edit-account')
+def teacher_edit_account():
+    return redirect(url_for('edit_account'))
+
+@app.route('/template/auth/student/dashboard')
+def student_dashboard():
+    if session.get('role') != 'student':
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    student_id = session.get('user_id')
+    # Nombre de cours pour la classe de l'étudiant
+    cursor.execute('SELECT COUNT(*) as courses FROM Courses WHERE class = (SELECT class FROM Users WHERE idUser = %s)', (student_id,))
+    courses = cursor.fetchone()['courses']
+    # Nombre de devoirs attendus pour la classe
+    cursor.execute('SELECT COUNT(*) as total_exams FROM Exams WHERE class = (SELECT class FROM Users WHERE idUser = %s)', (student_id,))
+    total_exams = cursor.fetchone()['total_exams']
+    # Nombre de devoirs déjà rendus par l'étudiant
+    cursor.execute('SELECT COUNT(*) as submitted_exams FROM Submissions WHERE idStudent = %s', (student_id,))
+    submitted_exams = cursor.fetchone()['submitted_exams']
+    # Devoirs non rendus = total - soumis
+    not_submitted_exams = max(total_exams - submitted_exams, 0)
+    # Nombre de questions posées par l'étudiant qui ont reçu une réponse
+    cursor.execute('SELECT COUNT(*) as answered_questions FROM Questions WHERE idStudent = %s AND response IS NOT NULL', (student_id,))
+    answered_questions = cursor.fetchone()['answered_questions']
+    # Nombre de séances pour la classe de l'étudiant
+    cursor.execute('SELECT COUNT(*) as sessions FROM onlineSessions WHERE class = (SELECT class FROM Users WHERE idUser = %s)', (student_id,))
+    sessions = cursor.fetchone()['sessions']
+    stats = {
+        'courses': courses,
+        'not_submitted_exams': not_submitted_exams,
+        'answered_questions': answered_questions,
+        'sessions': sessions
+    }
+    return render_template('student/studentDashboard/dashboard.html', stats=stats)
+
+@app.route('/student/lessons')
+def student_lessons():
+    return 'Liste des cours (à implémenter)'
+
+@app.route('/student/manage-exams')
+def student_manage_exams():
+    return 'Gestion des devoirs (à implémenter)'
+
+@app.route('/student/manage-questions')
+def student_manage_questions():
+    return 'Gestion des questions (à implémenter)'
+
+@app.route('/student/edit-account')
+def student_edit_account():
+    return redirect(url_for('edit_account'))
+
+@app.route('/template/auth/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'GET':
+        return render_template('auth/signup/index.html')
+    data = request.get_json()
+    nom = data.get('nom')
+    email = data.get('email')
+    phone = data.get('phone')
+    mdp = data.get('mdp')
+    roles = data.get('roles')
+    class_value = data.get('classValue')
+    speciality = data.get('speciality')
+    cursor = mysql.connection.cursor()
+    # Vérifier email ou téléphone déjà utilisé dans Users
+    cursor.execute('SELECT * FROM Users WHERE email = %s', (email,))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Cet email est déjà utilisé.'})
+    cursor.execute('SELECT * FROM Users WHERE phone = %s', (phone,))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Ce numéro de téléphone est déjà utilisé.'})
+    # Vérifier email ou téléphone déjà utilisé dans loginRequest
+    cursor.execute('SELECT * FROM loginRequest WHERE email = %s', (email,))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Cet email est déjà en attente de validation.'})
+    cursor.execute('SELECT * FROM loginRequest WHERE phone = %s', (phone,))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Ce numéro de téléphone est déjà en attente de validation.'})
+    # Insérer dans loginRequest (mdp non haché)
+    cursor.execute('INSERT INTO loginRequest (nom, email, mdp, phone, roles, class, speciality) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                   (nom, email, mdp, phone, roles, class_value if roles == 'student' else None, speciality if roles == 'teacher' else None))
+    mysql.connection.commit()
+    return jsonify({'success': True})
+
+@app.route('/edit_account', methods=['GET', 'POST'])
+def edit_account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    if request.method == 'GET':
+        cursor.execute('SELECT nom, email, phone, roles FROM Users WHERE idUser = %s', (user_id,))
+        user = cursor.fetchone()
+        return render_template('shared/editAccount/index.html', user=user, role=user['roles'])
+    # POST: modification
+    data = request.get_json()
+    nom = data.get('nom', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    old_mdp = data.get('old_mdp', '')
+    new_mdp = data.get('new_mdp', '')
+    # Vérifier l'ancien mot de passe
+    cursor.execute('SELECT mdp FROM Users WHERE idUser = %s', (user_id,))
+    user = cursor.fetchone()
+    if not check_password_hash(user['mdp'], old_mdp):
+        return jsonify({'success': False, 'message': 'Ancien mot de passe incorrect.'})
+    # Vérifier unicité email
+    cursor.execute('SELECT idUser FROM Users WHERE email = %s AND idUser != %s', (email, user_id))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Cet email est déjà utilisé.'})
+    # Vérifier unicité téléphone
+    if phone:
+        cursor.execute('SELECT idUser FROM Users WHERE phone = %s AND idUser != %s', (phone, user_id))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'message': 'Ce téléphone est déjà utilisé.'})
+    # Mise à jour
+    update_fields = {'nom': nom, 'email': email, 'phone': phone}
+    if new_mdp:
+        update_fields['mdp'] = generate_password_hash(new_mdp)
+    set_clause = ', '.join(f"{k} = %s" for k in update_fields)
+    values = list(update_fields.values()) + [user_id]
+    cursor.execute(f'UPDATE Users SET {set_clause} WHERE idUser = %s', values)
+    mysql.connection.commit()
+    return jsonify({'success': True})
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
