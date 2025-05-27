@@ -195,17 +195,55 @@ def teacher_dashboard():
 def teacher_manage_exams():
     return 'Gestion des devoirs (à implémenter)'
 
-@app.route('/teacher/manage-lessons')
-def teacher_manage_lessons():
-    return 'Gestion des cours (à implémenter)'
-
 @app.route('/teacher/manage-questions')
 def teacher_manage_questions():
     return 'Gestion des questions (à implémenter)'
 
-@app.route('/teacher/edit-account')
-def teacher_edit_account():
-    return redirect(url_for('edit_account'))
+@app.route('/teacher/manage-lessons')
+def teacher_manage_lessons():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT idCourse, title, descrp, class, created_at, file_path FROM Courses WHERE idTeacher = %s', (teacher_id,))
+    lessons = cursor.fetchall()
+    columns = [
+        ('idCourse', 'ID'),
+        ('title', 'Titre'),
+        ('descrp', 'Description'),
+        ('class', 'Classe'),
+        ('created_at', 'Date de création'),
+        ('file_path', 'Fichier')
+    ]
+    return render_template('teacher/manageLessons/index.html', lessons=lessons, columns=columns)
+
+@app.route('/teacher/delete-lesson/<int:lesson_id>', methods=['POST'])
+def teacher_delete_lesson(lesson_id):
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM Courses WHERE idCourse = %s AND idTeacher = %s', (lesson_id, teacher_id))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Cours supprimé.'})
+
+@app.route('/teacher/add-lesson', methods=['POST'])
+def teacher_add_lesson():
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    data = request.get_json()
+    title = data.get('title', '').strip()
+    descrp = data.get('descrp', '').strip()
+    class_value = data.get('class', '').strip()
+    file_path = data.get('file_path', '').strip()
+    if not title or not class_value or not file_path:
+        return jsonify({'success': False, 'message': 'Tous les champs requis sauf description.'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('INSERT INTO Courses (idTeacher, title, descrp, class, file_path, created_at) VALUES (%s, %s, %s, %s, %s, NOW())',
+                   (teacher_id, title, descrp, class_value, file_path))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Cours ajouté.'})
 
 @app.route('/template/auth/student/dashboard')
 def student_dashboard():
@@ -240,7 +278,29 @@ def student_dashboard():
 
 @app.route('/student/lessons')
 def student_lessons():
-    return 'Liste des cours (à implémenter)'
+    if session.get('role') != 'student':
+        return redirect(url_for('login'))
+    student_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Récupérer la classe de l'étudiant
+    cursor.execute('SELECT class FROM Users WHERE idUser = %s', (student_id,))
+    student_class = cursor.fetchone()['class']
+    # Récupérer les cours de cette classe
+    cursor.execute('''
+        SELECT U.nom as teacher_name, C.title, C.class, C.descrp, C.file_path
+        FROM Courses C
+        JOIN Users U ON U.idUser = C.idTeacher
+        WHERE C.class = %s
+    ''', (student_class,))
+    lessons = cursor.fetchall()
+    columns = [
+        ('teacher_name', 'Enseignant'),
+        ('title', 'Titre'),
+        ('class', 'Classe'),
+        ('descrp', 'Description'),
+        ('file_path', 'Lien/Fichier')
+    ]
+    return render_template('student/lessons/index.html', lessons=lessons, columns=columns)
 
 @app.route('/student/manage-exams')
 def student_manage_exams():

@@ -3,12 +3,20 @@ function confirmAction(message, callback) {
     if (window.confirm(message)) callback();
 }
 
+function showPopupMessage(msg, type = 'success') {
+    const popup = document.getElementById('manageAccountsPopup');
+    popup.textContent = msg;
+    popup.className = 'popup-message ' + (type === 'error' ? 'error' : 'success');
+    popup.style.display = 'block';
+    setTimeout(() => { popup.style.display = 'none'; }, 2200);
+}
+
 function validateRequest(id) {
     confirmAction("Êtes-vous sûr de vouloir valider cette demande ?", async function() {
         const res = await fetch(`/admin/validate-request/${id}`, { method: 'POST' });
         const data = await res.json();
-        showMessage(data.message, data.success);
-        if (data.success) location.reload();
+        showPopupMessage(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 1200);
     });
 }
 
@@ -16,8 +24,8 @@ function deleteRequest(id) {
     confirmAction("Êtes-vous sûr de vouloir supprimer cette demande ?", async function() {
         const res = await fetch(`/admin/delete-request/${id}`, { method: 'POST' });
         const data = await res.json();
-        showMessage(data.message, data.success);
-        if (data.success) location.reload();
+        showPopupMessage(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 1200);
     });
 }
 
@@ -25,16 +33,9 @@ function deleteUser(id) {
     confirmAction("Êtes-vous sûr de vouloir supprimer cet utilisateur ?", async function() {
         const res = await fetch(`/admin/delete-user/${id}`, { method: 'POST' });
         const data = await res.json();
-        showMessage(data.message, data.success);
-        if (data.success) location.reload();
+        showPopupMessage(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 1200);
     });
-}
-
-function showMessage(msg, success) {
-    const el = document.getElementById('manageAccountsMessage');
-    el.textContent = msg;
-    el.style.display = 'block';
-    el.style.color = success ? 'green' : 'red';
 }
 
 // Tri de table HTML (simple)

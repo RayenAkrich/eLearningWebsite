@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mes cours</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Cours de ma classe</h2>
+            <div class="table-responsive">
+                <table id="lessonsTable">
+                    <thead>
+                        <tr>
+                            {% for col, title in columns %}
+                            <th>{{ title }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lesson in lessons %}
+                        <tr>
+                            {% for col, title in columns %}
+                            <td>
+                                {% if col == 'file_path' and lesson[col] %}
+                                    <a href="{{ lesson[col] }}" target="_blank">Ouvrir</a>
+                                {% else %}
+                                    {{ lesson[col] }}
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -42,18 +42,25 @@ body.login-page {
     transition: background-color 0.3s;
 }
 
-.btn-primary {
+.btn.btn-primary {
     background-color: #f4c430;
     color: #004aad;
     font-weight: 600;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.btn-primary:hover {
+.btn.btn-primary:hover {
     background-color: #e0b028;
-    scale: 1.05;
-    transition: scale 0.1s;
-    cursor: pointer;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
+
 .nav-links .btn-secondary {
     background-color:transparent;
     border: 1px solid #fff;
@@ -112,11 +119,11 @@ body.login-page {
 }
 
 .form-group label {
+    font-weight: 500;
     display: block;
     font-size: 1rem;
     color: #333;
     margin-bottom: 0.5rem;
-    
 }
 .form-group input[type="text"],
 .form-group input[type="password"],
@@ -127,6 +134,12 @@ body.login-page {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #004aad;
+    box-shadow: 0 0 0 2px rgba(0,74,173,0.2);
 }
 
 .form-group.checkbox {
@@ -162,6 +175,53 @@ body.login-page {
     margin-top: 1rem;
 }
 
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    height: 550px;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: absolute;
+    right: 29%;
+    top: 10%;
+}
+
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.close:hover {
+    color: #000;
+}
+
+#addLessonForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+
 .footer {
     background-color: #004aad;
     color: #fff;
@@ -193,6 +253,27 @@ tr:nth-child(even) { background: #f9f9f9; }
 .disabled { opacity: 0.5; pointer-events: none; }
 main.form-main { min-height: 100vh; padding: 2rem 0; background: #f4f6fb; }
 h2 { color: #004aad; margin-top: 0; }
+
+/* Popup Message Styles */
+.popup-message {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #004aad;
+    border: 2px solid #f4c430;
+    border-radius: 8px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 9999;
+    min-width: 250px;
+    text-align: center;
+    display: none;
+}
+.popup-message.success { border-color: #4caf50; color: #388e3c; background: #e8f5e9; }
+.popup-message.error { border-color: #d32f2f; color: #d32f2f; background: #ffebee; }
 
 /* Responsive Design */
 @media (max-width: 768px) {
