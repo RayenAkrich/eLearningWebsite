@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des questions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Questions reçues</h2>
+            <div class="table-responsive">
+                <table id="questionsTable">
+                    <thead>
+                        <tr>
+                            <th>Élève</th>
+                            <th>Matière</th>
+                            <th>Classe de l'élève</th>
+                            <th>Question</th>
+                            <th>Date</th>
+                            <th>Réponse</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in questions %}
+                        <tr>
+                            <td>{{ q['student_name'] }}</td>
+                            <td>{{ q['speciality'] }}</td>
+                            <td>{{ q['student_class'] }}</td>
+                            <td>{{ q['descrp'] }}</td>
+                            <td>{{ q['created_at'] }}</td>
+                            <td>{% if q['response'] %}{{ q['response'] }}{% else %}<span style="color:#888;">En attente</span>{% endif %}</td>
+                            <td class="action-btns">
+                                {% if not q['response'] %}
+                                <button class="btn btn-secondary" onclick="showRespondForm({{ q['idQuestion'] }}, '{{ q['descrp']|escape }}')">Répondre</button>
+                                {% endif %}
+                                <button class="btn btn-secondary" onclick="deleteQuestion({{ q['idQuestion'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="respondModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeRespondForm()">&times;</span>
+                <h3>Répondre à la question</h3>
+                <form id="respondForm" autocomplete="off">
+                    <input type="hidden" id="respondQuestionId" name="question_id">
+                    <div class="form-group">
+                        <label for="response">Réponse *</label>
+                        <textarea id="response" name="response" required style="width:80%;height:80px;"></textarea>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeRespondForm()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="manageQuestionsPopup" class="popup-message" style="display:none;"></div>
+        <p id="manageQuestionsMessage" class="error-message"></p>
+    </main>
+    <script src="{{ url_for('static', filename='teacherManageQuestions.js') }}"></script>
+</body>
+</html>

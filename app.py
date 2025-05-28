@@ -197,7 +197,57 @@ def teacher_manage_exams():
 
 @app.route('/teacher/manage-questions')
 def teacher_manage_questions():
-    return 'Gestion des questions (à implémenter)'
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Récupérer la spécialité de l'enseignant
+    cursor.execute('SELECT speciality FROM Users WHERE idUser = %s', (teacher_id,))
+    speciality = cursor.fetchone()['speciality']
+    # Récupérer toutes les questions pour cette spécialité
+    cursor.execute('''
+        SELECT Q.idQuestion, U.nom as student_name, Q.speciality, U.class as student_class, Q.descrp, Q.created_at, Q.response
+        FROM Questions Q
+        JOIN Users U ON U.idUser = Q.idStudent
+        WHERE Q.speciality = %s
+        ORDER BY Q.created_at DESC
+    ''', (speciality,))
+    questions = cursor.fetchall()
+    return render_template('teacher/manageQuestions/index.html', questions=questions)
+
+@app.route('/teacher/respond-question/<int:question_id>', methods=['POST'])
+def teacher_respond_question(question_id):
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    data = request.get_json()
+    response = data.get('response', '').strip()
+    if not response:
+        return jsonify({'success': False, 'message': 'Réponse vide.'})
+    cursor = mysql.connection.cursor()
+    # Mettre à jour la question avec la réponse
+    cursor.execute('''
+        UPDATE Questions SET response = %s, responded_at = NOW(), idResponder = %s WHERE idQuestion = %s AND response IS NULL
+    ''', (response, teacher_id, question_id))
+    mysql.connection.commit()
+    if cursor.rowcount == 0:
+        return jsonify({'success': False, 'message': 'Question déjà répondue ou introuvable.'})
+    return jsonify({'success': True, 'message': 'Réponse envoyée.'})
+
+@app.route('/teacher/delete-question/<int:question_id>', methods=['POST'])
+def teacher_delete_question(question_id):
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Supprimer uniquement les questions de la spécialité de l'enseignant
+    cursor.execute('''
+        DELETE FROM Questions WHERE idQuestion = %s AND speciality = (SELECT speciality FROM Users WHERE idUser = %s)
+    ''', (question_id, teacher_id))
+    mysql.connection.commit()
+    if cursor.rowcount == 0:
+        return jsonify({'success': False, 'message': 'Suppression non autorisée ou question introuvable.'})
+    return jsonify({'success': True, 'message': 'Question supprimée.'})
 
 @app.route('/teacher/manage-lessons')
 def teacher_manage_lessons():
@@ -308,11 +358,51 @@ def student_manage_exams():
 
 @app.route('/student/manage-questions')
 def student_manage_questions():
-    return 'Gestion des questions (à implémenter)'
+    if session.get('role') != 'student':
+        return redirect(url_for('login'))
+    student_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('''
+        SELECT idQuestion, speciality, descrp, created_at, response
+        FROM Questions
+        WHERE idStudent = %s
+        ORDER BY created_at DESC
+    ''', (student_id,))
+    questions = cursor.fetchall()
+    columns = [
+        ('speciality', 'Matière'),
+        ('descrp', 'Question'),
+        ('created_at', 'Date'),
+        ('response', 'Réponse du prof')
+    ]
+    return render_template('student/manageQuestions/index.html', questions=questions, columns=columns)
 
-@app.route('/student/edit-account')
-def student_edit_account():
-    return redirect(url_for('edit_account'))
+@app.route('/student/add-question', methods=['POST'])
+def student_add_question():
+    if session.get('role') != 'student':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    student_id = session.get('user_id')
+    data = request.get_json()
+    speciality = data.get('speciality', '').strip()
+    descrp = data.get('descrp', '').strip()
+    allowed = ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Philosophie', 'Informatique']
+    if speciality not in allowed or not descrp:
+        return jsonify({'success': False, 'message': 'Champs invalides.'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('INSERT INTO Questions (idStudent, speciality, descrp, created_at) VALUES (%s, %s, %s, NOW())',
+                   (student_id, speciality, descrp))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Question ajoutée.'})
+
+@app.route('/student/delete-question/<int:question_id>', methods=['POST'])
+def student_delete_question(question_id):
+    if session.get('role') != 'student':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    student_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM Questions WHERE idQuestion = %s AND idStudent = %s', (question_id, student_id))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Question supprimée.'})
 
 @app.route('/template/auth/signup', methods=['GET', 'POST'])
 def signup():

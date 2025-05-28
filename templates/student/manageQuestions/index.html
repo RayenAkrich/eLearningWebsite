@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mes questions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Mes questions</h2>
+            <button class="btn btn-primary" onclick="showAddQuestionForm()" style="margin-bottom:1rem;">Ajouter une question</button>
+            <div class="table-responsive">
+                <table id="questionsTable">
+                    <thead>
+                        <tr>
+                            {% for col, title in columns %}
+                            <th>{{ title }}</th>
+                            {% endfor %}
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question in questions %}
+                        <tr>
+                            {% for col, title in columns %}
+                            <td>{% if col == 'response' and not question[col] %}<span style="color:#888;">En attente</span>{% else %}{{ question[col] }}{% endif %}</td>
+                            {% endfor %}
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteQuestion({{ question['idQuestion'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="addQuestionModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeAddQuestionForm()">&times;</span>
+                <h3>Ajouter une question</h3>
+                <form id="addQuestionForm" autocomplete="off">
+                    <div class="form-group">
+                        <label for="speciality">Matière *</label>
+                        <select id="speciality" name="speciality" required>
+                            <option value="">Choisir une matière</option>
+                            <option value="Mathématique">Mathématique</option>
+                            <option value="Physique">Physique</option>
+                            <option value="Francais">Francais</option>
+                            <option value="Arabe">Arabe</option>
+                            <option value="Anglais">Anglais</option>
+                            <option value="SVT">SVT</option>
+                            <option value="Philosophie">Philosophie</option>
+                            <option value="Informatique">Informatique</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="descrp">Question *</label>
+                        <textarea id="descrp" name="descrp" required style="width:80%;height:80px;"></textarea>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddQuestionForm()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="addQuestionPopup" class="popup-message" style="display:none;"></div>
+        <p id="manageQuestionsMessage" class="error-message"></p>
+    </main>
+    <script src="{{ url_for('static', filename='manageQuestions.js') }}"></script>
+</body>
+</html>

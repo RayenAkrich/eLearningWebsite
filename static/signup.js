@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('class').required = false;
             document.getElementById('speciality').required = false;
         }
+        document.getElementById('class').selectedIndex = 0;
+        document.getElementById('speciality').selectedIndex = 0;
     });
 
     signupForm.addEventListener('submit', function (e) {
@@ -49,8 +51,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const phone = document.getElementById('phone').value.trim();
         const mdp = document.getElementById('mdp').value;
         const roles = document.getElementById('roles').value;
-        const classValue = document.getElementById('class').value.trim();
-        const speciality = document.getElementById('speciality').value.trim();
+        const classValue = document.getElementById('class').value;
+        const speciality = document.getElementById('speciality').value;
 
         // Validation email
         const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -70,11 +72,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         // Validation classe/spécialité
         if (roles === 'student' && !classValue) {
-            errorMessage.textContent = 'Veuillez saisir la classe.';
+            errorMessage.textContent = 'Veuillez choisir la classe.';
             return;
         }
         if (roles === 'teacher' && !speciality) {
-            errorMessage.textContent = 'Veuillez saisir la spécialité.';
+            errorMessage.textContent = 'Veuillez choisir la spécialité.';
             return;
         }
 
