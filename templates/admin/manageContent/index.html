@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion du contenu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="content-btns">
+            <button id="showQuestionsBtn" class="content-btn active">Gestion des questions</button>
+            <button id="showLessonsBtn" class="content-btn">Gestion des cours</button>
+        </div>
+        <div id="questionsTableContainer" class="container-table active">
+            <h2>Questions</h2>
+            <div class="table-responsive">
+                <table id="adminQuestionsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Élève</th>
+                            <th>Matière</th>
+                            <th>Classe</th>
+                            <th>Question</th>
+                            <th>Date</th>
+                            <th>Réponse</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in questions %}
+                        <tr>
+                            <td>{{ q['idQuestion'] }}</td>
+                            <td>{{ q['student_name'] }}</td>
+                            <td>{{ q['speciality'] }}</td>
+                            <td>{{ q['student_class'] }}</td>
+                            <td>{{ q['descrp'] }}</td>
+                            <td>{{ q['created_at'] }}</td>
+                            <td>{% if q['response'] %}{{ q['response'] }}{% else %}<span style="color:#888;">En attente</span>{% endif %}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteQuestion({{ q['idQuestion'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="lessonsTableContainer" class="container-table">
+            <h2>Cours</h2>
+            <div class="table-responsive">
+                <table id="adminLessonsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Enseignant</th>
+                            <th>Titre</th>
+                            <th>Classe</th>
+                            <th>Description</th>
+                            <th>Fichier</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lesson in lessons %}
+                        <tr>
+                            <td>{{ lesson['idCourse'] }}</td>
+                            <td>{{ lesson['teacher_name'] }}</td>
+                            <td>{{ lesson['title'] }}</td>
+                            <td>{{ lesson['class'] }}</td>
+                            <td>{{ lesson['descrp'] }}</td>
+                            <td>{% if lesson['file_path'] %}<a href="{{ url_for('download_database_file', filename=lesson['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td>{{ lesson['created_at'] }}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteLesson({{ lesson['idCourse'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="manageContentPopup" class="popup-message" style="display:none;"></div>
+    </main>
+    <script src="{{ url_for('static', filename='manageContent.js') }}"></script>
+</body>
+</html>

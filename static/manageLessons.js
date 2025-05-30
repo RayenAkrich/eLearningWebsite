@@ -35,15 +35,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const title = this.title.value.trim();
         const descrp = this.descrp.value.trim();
         const classValue = this.class.value.trim();
-        const file_path = this.file_path.value.trim();
-        if (!title || !classValue || !file_path) {
+        const fileInput = this.file_path;
+        if (!title || !classValue || !fileInput.files.length) {
             showPopupMessage('Veuillez remplir tous les champs obligatoires.', 'error');
             return;
         }
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('descrp', descrp);
+        formData.append('class', classValue);
+        formData.append('file', fileInput.files[0]);
         const res = await fetch('/teacher/add-lesson', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, descrp, class: classValue, file_path })
+            body: formData
         });
         const data = await res.json();
         if (data.success) {

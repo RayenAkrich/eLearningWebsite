@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_mysqldb import MySQL
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
 import MySQLdb.cursors
 import os
 
@@ -16,6 +18,13 @@ app.config['MYSQL_DB'] = 'elearningdb'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'database')
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'jpg', 'png', 'jpeg'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def home():
@@ -159,7 +168,55 @@ def delete_user(user_id):
 
 @app.route('/admin/manage-content')
 def manage_content():
-    return 'Gestion du contenu (à implémenter)'
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    # Questions
+    cursor.execute('''
+        SELECT Q.idQuestion, U.nom as student_name, Q.speciality, U.class as student_class, Q.descrp, Q.created_at, Q.response
+        FROM Questions Q
+        JOIN Users U ON U.idUser = Q.idStudent
+        ORDER BY Q.created_at DESC
+    ''')
+    questions = cursor.fetchall()
+    # Lessons
+    cursor.execute('''
+        SELECT C.idCourse, U.nom as teacher_name, C.title, C.class, C.descrp, C.file_path, C.created_at
+        FROM Courses C
+        JOIN Users U ON U.idUser = C.idTeacher
+        ORDER BY C.created_at DESC
+    ''')
+    lessons = cursor.fetchall()
+    return render_template('admin/manageContent/index.html', questions=questions, lessons=lessons)
+
+@app.route('/admin/delete-question/<int:question_id>', methods=['POST'])
+def admin_delete_question(question_id):
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM Questions WHERE idQuestion = %s', (question_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Question supprimée.'})
+
+@app.route('/admin/delete-lesson/<int:lesson_id>', methods=['POST'])
+def admin_delete_lesson(lesson_id):
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    cursor = mysql.connection.cursor()
+    # Récupérer le chemin du fichier avant suppression
+    cursor.execute('SELECT file_path FROM Courses WHERE idCourse = %s', (lesson_id,))
+    row = cursor.fetchone()
+    if row and row['file_path']:
+        file_path = os.path.join(app.root_path, row['file_path'])
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                pass
+    # Supprimer la leçon de la base
+    cursor.execute('DELETE FROM Courses WHERE idCourse = %s', (lesson_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Cours supprimé.'})
 
 @app.route('/admin/manage-sessions')
 def manage_sessions():
@@ -273,6 +330,14 @@ def teacher_delete_lesson(lesson_id):
         return jsonify({'success': False, 'message': 'Non autorisé.'})
     teacher_id = session.get('user_id')
     cursor = mysql.connection.cursor()
+    # Récupérer le chemin du fichier avant suppression
+    cursor.execute('SELECT file_path FROM Courses WHERE idCourse = %s AND idTeacher = %s', (lesson_id, teacher_id))
+    row = cursor.fetchone()
+    if row and row['file_path']:
+        file_path = os.path.join(app.root_path, row['file_path'])
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    # Supprimer la leçon de la base
     cursor.execute('DELETE FROM Courses WHERE idCourse = %s AND idTeacher = %s', (lesson_id, teacher_id))
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Cours supprimé.'})
@@ -282,13 +347,20 @@ def teacher_add_lesson():
     if session.get('role') != 'teacher':
         return jsonify({'success': False, 'message': 'Non autorisé.'})
     teacher_id = session.get('user_id')
-    data = request.get_json()
-    title = data.get('title', '').strip()
-    descrp = data.get('descrp', '').strip()
-    class_value = data.get('class', '').strip()
-    file_path = data.get('file_path', '').strip()
-    if not title or not class_value or not file_path:
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Aucun fichier reçu.'})
+    file = request.files['file']
+    title = request.form.get('title', '').strip()
+    descrp = request.form.get('descrp', '').strip()
+    class_value = request.form.get('class', '').strip()
+    if not title or not class_value or not file or file.filename == '':
         return jsonify({'success': False, 'message': 'Tous les champs requis sauf description.'})
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'Type de fichier non autorisé.'})
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(save_path)
+    file_path = f'database/{filename}'
     cursor = mysql.connection.cursor()
     cursor.execute('INSERT INTO Courses (idTeacher, title, descrp, class, file_path, created_at) VALUES (%s, %s, %s, %s, %s, NOW())',
                    (teacher_id, title, descrp, class_value, file_path))
@@ -482,6 +554,10 @@ def edit_account():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+@app.route('/database/<path:filename>')
+def download_database_file(filename):
+    return send_from_directory(os.path.join(app.root_path, 'database'), filename, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
