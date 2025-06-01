@@ -30,6 +30,36 @@ function closeAddLessonForm() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Logique dynamique pour les classes selon la spécialité (copiée de manageExams)
+    const select = document.getElementById('class');
+    const specialityInput = document.getElementById('speciality');
+    if (select && specialityInput) {
+        const speciality = specialityInput.value;
+        // Même mapping que manageExams
+        let options = [
+            '1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique',
+            '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'
+        ];
+        if (speciality === 'SVT') {
+            options = [
+                '1er Année', '2eme Science', '3eme Science', '3eme Mathématiques', 'Bac Math', 'Bac science'
+            ];
+        } else if (speciality === 'Philosophie') {
+            options = [
+                '3eme Science', '3eme Mathématiques', '3eme Technique', '3eme Informatique',
+                'Bac Informatique', 'Bac Technique', 'Bac Math', 'Bac science'
+            ];
+        }
+        // Supprimer toutes les options sauf la première
+        while (select.options.length > 1) select.remove(1);
+        // Ajouter dynamiquement les options
+        for (const cl of options) {
+            const opt = document.createElement('option');
+            opt.value = cl;
+            opt.textContent = cl;
+            select.appendChild(opt);
+        }
+    }
     document.getElementById('addLessonForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const title = this.title.value.trim();
@@ -85,3 +115,12 @@ function sortTable(tableId, colIdx) {
     table.asc = asc;
     table.ascCol = colIdx;
 }
+
+// Récupérer la spécialité depuis le template (input hidden ou readonly)
+const specialityInput = document.getElementById('speciality');
+let teacher_speciality = '';
+if (specialityInput) {
+    teacher_speciality = specialityInput.value;
+}
+
+// Utilisez teacher_speciality si besoin dans le JS (ex: pour logique dynamique de classes)

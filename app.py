@@ -181,13 +181,21 @@ def manage_content():
     questions = cursor.fetchall()
     # Lessons
     cursor.execute('''
-        SELECT C.idCourse, U.nom as teacher_name, C.title, C.class, C.descrp, C.file_path, C.created_at
+        SELECT C.idCourse, U.nom as teacher_name, U.speciality as speciality, C.title, C.class, C.descrp, C.file_path, C.created_at
         FROM Courses C
         JOIN Users U ON U.idUser = C.idTeacher
         ORDER BY C.created_at DESC
     ''')
     lessons = cursor.fetchall()
-    return render_template('admin/manageContent/index.html', questions=questions, lessons=lessons)
+    # Exams
+    cursor.execute('''
+        SELECT E.idExam, U.nom as teacher_name, E.speciality, E.class, E.descrp, E.created_at, E.deadline, E.file_path, E.file_path_corr
+        FROM Exams E
+        JOIN Users U ON U.idUser = E.idTeacher
+        ORDER BY E.created_at DESC
+    ''')
+    exams = cursor.fetchall()
+    return render_template('admin/manageContent/index.html', questions=questions, lessons=lessons, exams=exams)
 
 @app.route('/admin/delete-question/<int:question_id>', methods=['POST'])
 def admin_delete_question(question_id):
@@ -209,14 +217,29 @@ def admin_delete_lesson(lesson_id):
     if row and row['file_path']:
         file_path = os.path.join(app.root_path, row['file_path'])
         if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception as e:
-                pass
+            os.remove(file_path)
     # Supprimer la leçon de la base
     cursor.execute('DELETE FROM Courses WHERE idCourse = %s', (lesson_id,))
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Cours supprimé.'})
+
+@app.route('/admin/delete-exam/<int:exam_id>', methods=['POST'])
+def admin_delete_exam(exam_id):
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    cursor = mysql.connection.cursor()
+    # Récupérer les chemins des fichiers avant suppression
+    cursor.execute('SELECT file_path, file_path_corr FROM Exams WHERE idExam = %s', (exam_id,))
+    row = cursor.fetchone()
+    for key in ['file_path', 'file_path_corr']:
+        if row and row[key]:
+            file_path = os.path.join(app.root_path, row[key])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+    # Supprimer l'examen de la base
+    cursor.execute('DELETE FROM Exams WHERE idExam = %s', (exam_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Examen supprimé.'})
 
 @app.route('/admin/manage-sessions')
 def manage_sessions():
@@ -250,7 +273,72 @@ def teacher_dashboard():
 
 @app.route('/teacher/manage-exams')
 def teacher_manage_exams():
-    return 'Gestion des devoirs (à implémenter)'
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT speciality FROM Users WHERE idUser = %s', (teacher_id,))
+    teacher_speciality = cursor.fetchone()['speciality']
+    cursor.execute('''
+        SELECT idExam, speciality, class, descrp, created_at, deadline, file_path, file_path_corr
+        FROM Exams WHERE idTeacher = %s ORDER BY created_at DESC
+    ''', (teacher_id,))
+    exams = cursor.fetchall()
+    return render_template('teacher/manageExams/index.html', exams=exams, teacher_speciality=teacher_speciality)
+
+@app.route('/teacher/add-exam', methods=['POST'])
+def teacher_add_exam():
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Aucun fichier reçu.'})
+    file = request.files['file']
+    file_corr = request.files.get('file_corr')
+    speciality = request.form.get('speciality', '').strip()
+    class_value = request.form.get('class', '').strip()
+    descrp = request.form.get('descrp', '').strip()
+    deadline = request.form.get('deadline', '').strip()
+    if not speciality or not class_value or not file or file.filename == '' or not deadline:
+        return jsonify({'success': False, 'message': 'Tous les champs requis sauf description et correction.'})
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'Type de fichier non autorisé.'})
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(save_path)
+    file_path = f'database/{filename}'
+    file_path_corr = None
+    if file_corr and file_corr.filename:
+        if not allowed_file(file_corr.filename):
+            return jsonify({'success': False, 'message': 'Type de fichier correction non autorisé.'})
+        filename_corr = secure_filename(file_corr.filename)
+        save_path_corr = os.path.join(app.config['UPLOAD_FOLDER'], filename_corr)
+        file_corr.save(save_path_corr)
+        file_path_corr = f'database/{filename_corr}'
+    cursor = mysql.connection.cursor()
+    cursor.execute('''
+        INSERT INTO Exams (idTeacher, speciality, descrp, class, created_at, deadline, file_path, file_path_corr)
+        VALUES (%s, %s, %s, %s, NOW(), %s, %s, %s)
+    ''', (teacher_id, speciality, descrp, class_value, deadline, file_path, file_path_corr))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Devoir ajouté.'})
+
+@app.route('/teacher/delete-exam/<int:exam_id>', methods=['POST'])
+def teacher_delete_exam(exam_id):
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT file_path, file_path_corr FROM Exams WHERE idExam = %s AND idTeacher = %s', (exam_id, teacher_id))
+    row = cursor.fetchone()
+    for key in ['file_path', 'file_path_corr']:
+        if row and row[key]:
+            file_path = os.path.join(app.root_path, row[key])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+    cursor.execute('DELETE FROM Exams WHERE idExam = %s AND idTeacher = %s', (exam_id, teacher_id))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Devoir supprimé.'})
 
 @app.route('/teacher/manage-questions')
 def teacher_manage_questions():
@@ -312,6 +400,8 @@ def teacher_manage_lessons():
         return redirect(url_for('login'))
     teacher_id = session.get('user_id')
     cursor = mysql.connection.cursor()
+    cursor.execute('SELECT speciality FROM Users WHERE idUser = %s', (teacher_id,))
+    teacher_speciality = cursor.fetchone()['speciality']
     cursor.execute('SELECT idCourse, title, descrp, class, created_at, file_path FROM Courses WHERE idTeacher = %s', (teacher_id,))
     lessons = cursor.fetchall()
     columns = [
@@ -322,7 +412,7 @@ def teacher_manage_lessons():
         ('created_at', 'Date de création'),
         ('file_path', 'Fichier')
     ]
-    return render_template('teacher/manageLessons/index.html', lessons=lessons, columns=columns)
+    return render_template('teacher/manageLessons/index.html', lessons=lessons, columns=columns, teacher_speciality=teacher_speciality)
 
 @app.route('/teacher/delete-lesson/<int:lesson_id>', methods=['POST'])
 def teacher_delete_lesson(lesson_id):
@@ -409,7 +499,7 @@ def student_lessons():
     student_class = cursor.fetchone()['class']
     # Récupérer les cours de cette classe
     cursor.execute('''
-        SELECT U.nom as teacher_name, C.title, C.class, C.descrp, C.file_path
+        SELECT C.idCourse, U.nom as teacher_name, C.title, C.class, U.speciality, C.descrp, C.file_path, C.created_at
         FROM Courses C
         JOIN Users U ON U.idUser = C.idTeacher
         WHERE C.class = %s
@@ -417,6 +507,7 @@ def student_lessons():
     lessons = cursor.fetchall()
     columns = [
         ('teacher_name', 'Enseignant'),
+        ('speciality', 'Matière'),
         ('title', 'Titre'),
         ('class', 'Classe'),
         ('descrp', 'Description'),
@@ -426,7 +517,33 @@ def student_lessons():
 
 @app.route('/student/manage-exams')
 def student_manage_exams():
-    return 'Gestion des devoirs (à implémenter)'
+    if session.get('role') != 'student':
+        return redirect(url_for('login'))
+    student_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Récupérer la classe de l'étudiant
+    cursor.execute('SELECT class FROM Users WHERE idUser = %s', (student_id,))
+    student_class = cursor.fetchone()['class']
+    # Récupérer les devoirs de cette classe
+    cursor.execute('''
+        SELECT U.nom as teacher_name, E.speciality, E.class, E.descrp, E.created_at, E.deadline, E.file_path, E.file_path_corr
+        FROM Exams E
+        JOIN Users U ON U.idUser = E.idTeacher
+        WHERE E.class = %s
+        ORDER BY E.created_at DESC
+    ''', (student_class,))
+    exams = cursor.fetchall()
+    columns = [
+        ('teacher_name', 'Enseignant'),
+        ('speciality', 'Matière'),
+        ('class', 'Classe'),
+        ('descrp', 'Description'),
+        ('created_at', 'Date'),
+        ('deadline', 'Deadline'),
+        ('file_path', 'Énoncé'),
+        ('file_path_corr', 'Correction')
+    ]
+    return render_template('student/manageExams/index.html', exams=exams, columns=columns)
 
 @app.route('/student/manage-questions')
 def student_manage_questions():
@@ -434,6 +551,10 @@ def student_manage_questions():
         return redirect(url_for('login'))
     student_id = session.get('user_id')
     cursor = mysql.connection.cursor()
+    # Récupérer la classe de l'étudiant
+    cursor.execute('SELECT class FROM Users WHERE idUser = %s', (student_id,))
+    student_class = cursor.fetchone()['class']
+    # Récupérer les questions de l'étudiant
     cursor.execute('''
         SELECT idQuestion, speciality, descrp, created_at, response
         FROM Questions
@@ -447,7 +568,22 @@ def student_manage_questions():
         ('created_at', 'Date'),
         ('response', 'Réponse du prof')
     ]
-    return render_template('student/manageQuestions/index.html', questions=questions, columns=columns)
+    # Logique matières compatibles selon la classe
+    matieres_by_classe = {
+        '1er Année': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Informatique'],
+        '2eme Science': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Informatique'],
+        '2eme Informatique': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Informatique'],
+        '3eme Science': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Philosophie', 'Informatique'],
+        '3eme Technique': ['Technique','Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie', 'Informatique'],
+        '3eme Mathématiques': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie', 'SVT', 'Informatique'],
+        '3eme Informatique': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Informatique', 'Philosophie'],
+        'Bac Math': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie', 'Informatique', 'SVT'],
+        'Bac science': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Philosophie', 'Informatique'],
+        'Bac Info': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Informatique', 'Philosophie'],
+        'Bac Technique': ['Technique','Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie']
+    }
+    matieres = matieres_by_classe.get(student_class)
+    return render_template('student/manageQuestions/index.html', questions=questions, columns=columns, matieres=matieres, student_class=student_class)
 
 @app.route('/student/add-question', methods=['POST'])
 def student_add_question():
@@ -558,6 +694,33 @@ def logout():
 @app.route('/database/<path:filename>')
 def download_database_file(filename):
     return send_from_directory(os.path.join(app.root_path, 'database'), filename, as_attachment=True)
+
+@app.route('/teacher/add-correction/<int:exam_id>', methods=['POST'])
+def teacher_add_correction(exam_id):
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'error': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT file_path_corr FROM Exams WHERE idExam = %s AND idTeacher = %s', (exam_id, teacher_id))
+    exam = cursor.fetchone()
+    if not exam:
+        return jsonify({'success': False, 'error': 'Devoir introuvable.'})
+    if exam['file_path_corr']:
+        return jsonify({'success': False, 'error': 'Correction déjà ajoutée.'})
+    if 'file_path_corr' not in request.files:
+        return jsonify({'success': False, 'error': 'Aucun fichier reçu.'})
+    file = request.files['file_path_corr']
+    if not file or file.filename == '':
+        return jsonify({'success': False, 'error': 'Aucun fichier sélectionné.'})
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'error': 'Type de fichier non autorisé.'})
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(save_path)
+    file_path_corr = f'database/{filename}'
+    cursor.execute('UPDATE Exams SET file_path_corr = %s WHERE idExam = %s AND idTeacher = %s', (file_path_corr, exam_id, teacher_id))
+    mysql.connection.commit()
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True)

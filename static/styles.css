@@ -88,6 +88,7 @@ body.login-page {
     scale: 1.05;
     transition: scale 0.1s;
     cursor: pointer;
+    border-radius: 5px;
 }
 .login-section {
     flex: 1 0 auto;
@@ -197,12 +198,12 @@ body.login-page {
     padding: 2rem;
     border-radius: 10px;
     width: 90%;
-    height: 550px;
+    height: 600px;
     max-width: 600px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     position: absolute;
     right: 29%;
-    top: 10%;
+    top: 1%;
 }
 
 

@@ -53,14 +53,9 @@
                         <label for="speciality">Matière *</label>
                         <select id="speciality" name="speciality" required>
                             <option value="">Choisir une matière</option>
-                            <option value="Mathématique">Mathématique</option>
-                            <option value="Physique">Physique</option>
-                            <option value="Francais">Francais</option>
-                            <option value="Arabe">Arabe</option>
-                            <option value="Anglais">Anglais</option>
-                            <option value="SVT">SVT</option>
-                            <option value="Philosophie">Philosophie</option>
-                            <option value="Informatique">Informatique</option>
+                            {% for mat in matieres %}
+                            <option value="{{ mat }}">{{ mat }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">

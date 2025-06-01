@@ -1,22 +1,36 @@
-// JS pour la gestion du contenu admin (questions/cours)
+// JS pour la gestion du contenu admin (questions/cours/examens)
 document.addEventListener('DOMContentLoaded', function() {
     const showQuestionsBtn = document.getElementById('showQuestionsBtn');
     const showLessonsBtn = document.getElementById('showLessonsBtn');
+    const showExamsBtn = document.getElementById('showExamsBtn');
     const questionsTable = document.getElementById('questionsTableContainer');
     const lessonsTable = document.getElementById('lessonsTableContainer');
+    const examsTable = document.getElementById('examsTableContainer');
     const popup = document.getElementById('manageContentPopup');
 
     showQuestionsBtn.addEventListener('click', function() {
         showQuestionsBtn.classList.add('active');
         showLessonsBtn.classList.remove('active');
+        showExamsBtn.classList.remove('active');
         questionsTable.classList.add('active');
         lessonsTable.classList.remove('active');
+        examsTable.classList.remove('active');
     });
     showLessonsBtn.addEventListener('click', function() {
         showLessonsBtn.classList.add('active');
         showQuestionsBtn.classList.remove('active');
+        showExamsBtn.classList.remove('active');
         lessonsTable.classList.add('active');
         questionsTable.classList.remove('active');
+        examsTable.classList.remove('active');
+    });
+    showExamsBtn.addEventListener('click', function() {
+        showExamsBtn.classList.add('active');
+        showQuestionsBtn.classList.remove('active');
+        showLessonsBtn.classList.remove('active');
+        examsTable.classList.add('active');
+        questionsTable.classList.remove('active');
+        lessonsTable.classList.remove('active');
     });
 });
 
@@ -44,6 +58,15 @@ function deleteQuestion(id) {
 function deleteLesson(id) {
     confirmAction("Êtes-vous sûr de vouloir supprimer ce cours ?", async function() {
         const res = await fetch(`/admin/delete-lesson/${id}`, { method: 'POST' });
+        const data = await res.json();
+        showPopupMessage(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 1200);
+    });
+}
+
+function deleteExam(id) {
+    confirmAction("Êtes-vous sûr de vouloir supprimer cet examen ?", async function() {
+        const res = await fetch(`/admin/delete-exam/${id}`, { method: 'POST' });
         const data = await res.json();
         showPopupMessage(data.message, data.success ? 'success' : 'error');
         if (data.success) setTimeout(() => location.reload(), 1200);

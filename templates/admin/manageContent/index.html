@@ -19,6 +19,7 @@
         <div class="content-btns">
             <button id="showQuestionsBtn" class="content-btn active">Gestion des questions</button>
             <button id="showLessonsBtn" class="content-btn">Gestion des cours</button>
+            <button id="showExamsBtn" class="content-btn">Gestion des Séries/Exams</button>
         </div>
         <div id="questionsTableContainer" class="container-table active">
             <h2>Questions</h2>
@@ -65,6 +66,7 @@
                             <th>Enseignant</th>
                             <th>Titre</th>
                             <th>Classe</th>
+                            <th>Matière</th>
                             <th>Description</th>
                             <th>Fichier</th>
                             <th>Date</th>
@@ -78,11 +80,51 @@
                             <td>{{ lesson['teacher_name'] }}</td>
                             <td>{{ lesson['title'] }}</td>
                             <td>{{ lesson['class'] }}</td>
+                            <td>{{ lesson['speciality'] }}</td>
                             <td>{{ lesson['descrp'] }}</td>
                             <td>{% if lesson['file_path'] %}<a href="{{ url_for('download_database_file', filename=lesson['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
                             <td>{{ lesson['created_at'] }}</td>
                             <td class="action-btns">
                                 <button class="btn btn-secondary" onclick="deleteLesson({{ lesson['idCourse'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="examsTableContainer" class="container-table">
+            <h2>Séries / Exams</h2>
+            <div class="table-responsive">
+                <table id="adminExamsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Enseignant</th>
+                            <th>Matière</th>
+                            <th>Classe</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Deadline</th>
+                            <th>Fichier</th>
+                            <th>Correction</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in exams %}
+                        <tr>
+                            <td>{{ exam['idExam'] }}</td>
+                            <td>{{ exam['teacher_name'] }}</td>
+                            <td>{{ exam['speciality'] }}</td>
+                            <td>{{ exam['class'] }}</td>
+                            <td>{{ exam['descrp'] }}</td>
+                            <td>{{ exam['created_at'] }}</td>
+                            <td>{{ exam['deadline'] }}</td>
+                            <td>{% if exam['file_path'] %}<a href="{{ url_for('download_database_file', filename=exam['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td>{% if exam['file_path_corr'] %}<a href="{{ url_for('download_database_file', filename=exam['file_path_corr'].split('/')[-1]) }}" target="_blank">Correction</a>{% endif %}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteExam({{ exam['idExam'] }})">Supprimer</button>
                             </td>
                         </tr>
                         {% endfor %}

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des cours</title>
+    <title>Gestion des devoirs</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -17,32 +17,39 @@
     </header>
     <main class="form-main">
         <div class="table-container">
-            <h2>Mes cours</h2>
-            <button class="btn btn-primary" onclick="showAddLessonForm()" style="margin-bottom:1rem;">Ajouter un cours</button>
+            <h2>Mes devoirs / séries</h2>
+            <button class="btn btn-primary" onclick="showAddExamForm()" style="margin-bottom:1rem;">Ajouter un devoir</button>
             <div class="table-responsive">
-                <table id="lessonsTable">
+                <table id="examsTable">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Titre</th>
-                            <th>Description</th>
+                            <th>Matière</th>
                             <th>Classe</th>
-                            <th>Date de création</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Deadline</th>
                             <th>Fichier</th>
+                            <th>Correction</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for lesson in lessons %}
+                        {% for exam in exams %}
                         <tr>
-                            <td>{{ lesson['idCourse'] }}</td>
-                            <td>{{ lesson['title'] }}</td>
-                            <td>{{ lesson['descrp'] }}</td>
-                            <td>{{ lesson['class'] }}</td>
-                            <td>{{ lesson['created_at'] }}</td>
-                            <td>{% if lesson['file_path'] %}<a href="{{ url_for('download_database_file', filename=lesson['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td>{{ exam['idExam'] }}</td>
+                            <td>{{ exam['speciality'] }}</td>
+                            <td>{{ exam['class'] }}</td>
+                            <td>{{ exam['descrp'] }}</td>
+                            <td>{{ exam['created_at'] }}</td>
+                            <td>{{ exam['deadline'] }}</td>
+                            <td>{% if exam['file_path'] %}<a href="{{ url_for('download_database_file', filename=exam['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td>{% if exam['file_path_corr'] %}<a href="{{ url_for('download_database_file', filename=exam['file_path_corr'].split('/')[-1]) }}" target="_blank">Correction</a>{% endif %}</td>
                             <td class="action-btns">
-                                <button class="btn btn-secondary" onclick="deleteLesson({{ lesson['idCourse'] }})">Supprimer</button>
+                                <button class="btn btn-secondary" onclick="deleteExam({{ exam['idExam'] }})">Supprimer</button>
+                                {% if not exam['file_path_corr'] %}
+                                <button class="bbtn btn-secondary" onclick="showAddCorrectionModal({{ exam['idExam'] }})">Ajouter Correction</button>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -50,22 +57,14 @@
                 </table>
             </div>
         </div>
-        <div id="addLessonModal" class="modal" style="display:none;">
+        <div id="addExamModal" class="modal" style="display:none;">
             <div class="modal-content">
-                <span class="close" onclick="closeAddLessonForm()">&times;</span>
-                <h3>Ajouter un cours</h3>
-                <form id="addLessonForm" autocomplete="off">
+                <span class="close" onclick="closeAddExamForm()">&times;</span>
+                <h3>Ajouter un devoir</h3>
+                <form id="addExamForm" autocomplete="off">
                     <div class="form-group">
                         <label for="speciality">Matière *</label>
                         <input type="text" id="speciality" name="speciality" value="{{ teacher_speciality }}" readonly required>
-                    </div>
-                    <div class="form-group">
-                        <label for="title">Titre *</label>
-                        <input type="text" id="title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="descrp">Description</label>
-                        <input type="text" id="descrp" name="descrp">
                     </div>
                     <div class="form-group">
                         <label for="class">Classe *</label>
@@ -78,7 +77,6 @@
                             <option value="3eme Mathématiques">3eme Mathématiques</option>
                             <option value="Bac Math">Bac Math</option>
                             <option value="Bac science">Bac science</option>
-                            <option value="3eme Technique">3eme Technique</option>
                             {% elif teacher_speciality == 'Philosophie' %}
                             <option value="3eme Science">3eme Science</option>
                             <option value="3eme Mathématiques">3eme Mathématiques</option>
@@ -107,19 +105,50 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="file_path">Fichier (upload) *</label>
-                        <input type="file" id="file_path" name="file_path" required accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.png,.jpeg">
+                        <label for="descrp">Description</label>
+                        <input type="text" id="descrp" name="descrp">
+                    </div>
+                    <div class="form-group">
+                        <label for="deadline">Deadline *</label>
+                        <input type="datetime-local" id="deadline" name="deadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="file_path">Fichier (énoncé) *</label>
+                        <input type="file" id="file_path" name="file" required accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.png,.jpeg">
+                    </div>
+                    <div class="form-group">
+                        <label for="file_path_corr">Fichier (correction)</label>
+                        <input type="file" id="file_path_corr" name="file_corr" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.png,.jpeg">
                     </div>
                     <div class="form-buttons">
                         <button type="submit" class="btn btn-primary">Ajouter</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeAddLessonForm()">Annuler</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddExamForm()">Annuler</button>
                     </div>
                 </form>
             </div>
         </div>
-        <div id="addLessonPopup" class="popup-message" style="display:none;"></div>
-        <p id="manageLessonsMessage" class="error-message"></p>
+        <!-- Modal pour ajouter une correction -->
+        <div id="addCorrectionModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeAddCorrectionModal()">&times;</span>
+                <h3>Ajouter une correction</h3>
+                <form id="addCorrectionForm" autocomplete="off" enctype="multipart/form-data">
+                    <input type="hidden" id="correctionExamId" name="exam_id">
+                    <div class="form-group">
+                        <label for="file_path_corr_modal">Fichier correction *</label>
+                        <input type="file" id="file_path_corr_modal" name="file_path_corr" required accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.png,.jpeg">
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Uploader</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddCorrectionModal()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="addCorrectionPopup" class="popup-message" style="display:none;"></div>
+        <div id="addExamPopup" class="popup-message" style="display:none;"></div>
+        <p id="manageExamsMessage" class="error-message"></p>
     </main>
-    <script src="{{ url_for('static', filename='manageLessons.js') }}"></script>
+    <script src="{{ url_for('static', filename='manageExams.js') }}"></script>
 </body>
 </html>

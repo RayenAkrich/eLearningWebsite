@@ -66,6 +66,7 @@ CREATE TABLE Exams (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deadline DATETIME NOT NULL,
     file_path VARCHAR(255), 
+	file_path_corr VARCHAR(255), 
     FOREIGN KEY (idTeacher) REFERENCES Users(idUser) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mes cours</title>
+    <title>Mes devoirs</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -17,9 +17,9 @@
     </header>
     <main class="form-main">
         <div class="table-container">
-            <h2>Mes cours</h2>
+            <h2>Mes devoirs / séries</h2>
             <div class="table-responsive">
-                <table id="lessonsTable">
+                <table id="examsTable">
                     <thead>
                         <tr>
                             {% for col, label in columns %}
@@ -28,13 +28,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for lesson in lessons %}
+                        {% for exam in exams %}
                         <tr>
                             {% for col, label in columns %}
                                 {% if col == 'file_path' %}
-                                    <td>{% if lesson[col] %}<a href="{{ url_for('download_database_file', filename=lesson[col].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                                    <td>{% if exam[col] %}<a href="{{ url_for('download_database_file', filename=exam[col].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                                {% elif col == 'file_path_corr' %}
+                                    <td>{% if exam[col] %}<a href="{{ url_for('download_database_file', filename=exam[col].split('/')[-1]) }}" target="_blank">Correction</a>{% endif %}</td>
                                 {% else %}
-                                    <td>{{ lesson[col] }}</td>
+                                    <td>{{ exam[col] }}</td>
                                 {% endif %}
                             {% endfor %}
                         </tr>
