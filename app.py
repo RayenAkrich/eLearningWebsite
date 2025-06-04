@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 import MySQLdb.cursors
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
@@ -167,35 +168,25 @@ def delete_user(user_id):
     return jsonify({'success': True, 'message': 'Utilisateur supprimé.'})
 
 @app.route('/admin/manage-content')
-def manage_content():
+def admin_manage_content():
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
-    cursor = mysql.connection.cursor()
+    cur = mysql.connection.cursor()
     # Questions
-    cursor.execute('''
-        SELECT Q.idQuestion, U.nom as student_name, Q.speciality, U.class as student_class, Q.descrp, Q.created_at, Q.response
-        FROM Questions Q
-        JOIN Users U ON U.idUser = Q.idStudent
-        ORDER BY Q.created_at DESC
-    ''')
-    questions = cursor.fetchall()
+    cur.execute('''SELECT q.idQuestion, u.nom AS student_name, q.speciality, u.class AS student_class, q.descrp, q.created_at, q.response FROM Questions q JOIN Users u ON q.idStudent = u.idUser''')
+    questions = cur.fetchall()
     # Lessons
-    cursor.execute('''
-        SELECT C.idCourse, U.nom as teacher_name, U.speciality as speciality, C.title, C.class, C.descrp, C.file_path, C.created_at
-        FROM Courses C
-        JOIN Users U ON U.idUser = C.idTeacher
-        ORDER BY C.created_at DESC
-    ''')
-    lessons = cursor.fetchall()
+    cur.execute('''SELECT c.idCourse, u.nom AS teacher_name, c.title, c.class, c.descrp, c.file_path, c.created_at FROM Courses c JOIN Users u ON c.idTeacher = u.idUser''')
+    lessons = cur.fetchall()
     # Exams
-    cursor.execute('''
-        SELECT E.idExam, U.nom as teacher_name, E.speciality, E.class, E.descrp, E.created_at, E.deadline, E.file_path, E.file_path_corr
-        FROM Exams E
-        JOIN Users U ON U.idUser = E.idTeacher
-        ORDER BY E.created_at DESC
-    ''')
-    exams = cursor.fetchall()
-    return render_template('admin/manageContent/index.html', questions=questions, lessons=lessons, exams=exams)
+    cur.execute('''SELECT e.idExam, u.nom AS teacher_name, e.speciality, e.class, e.descrp, e.created_at, e.deadline, e.file_path, e.file_path_corr FROM Exams e JOIN Users u ON e.idTeacher = u.idUser''')
+    exams = cur.fetchall()
+    # Submissions
+    cur.execute('''SELECT s.idSubmission, u.nom AS student_name, u.class AS student_class, e.speciality, e.descrp AS exam_descrp, s.file_path, s.submitted_at FROM Submissions s JOIN Users u ON s.idStudent = u.idUser JOIN Exams e ON s.idExam = e.idExam ORDER BY s.submitted_at DESC''')
+    submissions = cur.fetchall()
+    print('DEBUG submissions:', submissions)  # Ajout debug
+    cur.close()
+    return render_template('admin/manageContent/index.html', questions=questions, lessons=lessons, exams=exams, submissions=submissions)
 
 @app.route('/admin/delete-question/<int:question_id>', methods=['POST'])
 def admin_delete_question(question_id):
@@ -228,7 +219,17 @@ def admin_delete_exam(exam_id):
     if session.get('role') != 'admin':
         return jsonify({'success': False, 'message': 'Non autorisé.'})
     cursor = mysql.connection.cursor()
-    # Récupérer les chemins des fichiers avant suppression
+    # Supprimer les fichiers des soumissions liées à cet examen
+    cursor.execute('SELECT file_path FROM Submissions WHERE idExam = %s', (exam_id,))
+    submission_files = cursor.fetchall()
+    for row in submission_files:
+        if row['file_path']:
+            file_path = os.path.join(app.root_path, row['file_path'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+    # Supprimer les soumissions liées à cet examen
+    cursor.execute('DELETE FROM Submissions WHERE idExam = %s', (exam_id,))
+    # Récupérer les chemins des fichiers de l'examen avant suppression
     cursor.execute('SELECT file_path, file_path_corr FROM Exams WHERE idExam = %s', (exam_id,))
     row = cursor.fetchone()
     for key in ['file_path', 'file_path_corr']:
@@ -239,7 +240,7 @@ def admin_delete_exam(exam_id):
     # Supprimer l'examen de la base
     cursor.execute('DELETE FROM Exams WHERE idExam = %s', (exam_id,))
     mysql.connection.commit()
-    return jsonify({'success': True, 'message': 'Examen supprimé.'})
+    return jsonify({'success': True, 'message': 'Examen et soumissions supprimés.'})
 
 @app.route('/admin/manage-sessions')
 def manage_sessions():
@@ -329,6 +330,17 @@ def teacher_delete_exam(exam_id):
         return jsonify({'success': False, 'message': 'Non autorisé.'})
     teacher_id = session.get('user_id')
     cursor = mysql.connection.cursor()
+    # Supprimer les fichiers des soumissions liées à cet examen
+    cursor.execute('SELECT file_path FROM Submissions WHERE idExam = %s', (exam_id,))
+    submission_files = cursor.fetchall()
+    for row in submission_files:
+        if row['file_path']:
+            file_path = os.path.join(app.root_path, row['file_path'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+    # Supprimer les soumissions liées à cet examen
+    cursor.execute('DELETE FROM Submissions WHERE idExam = %s', (exam_id,))
+    # Récupérer les chemins des fichiers de l'examen avant suppression
     cursor.execute('SELECT file_path, file_path_corr FROM Exams WHERE idExam = %s AND idTeacher = %s', (exam_id, teacher_id))
     row = cursor.fetchone()
     for key in ['file_path', 'file_path_corr']:
@@ -338,7 +350,7 @@ def teacher_delete_exam(exam_id):
                 os.remove(file_path)
     cursor.execute('DELETE FROM Exams WHERE idExam = %s AND idTeacher = %s', (exam_id, teacher_id))
     mysql.connection.commit()
-    return jsonify({'success': True, 'message': 'Devoir supprimé.'})
+    return jsonify({'success': True, 'message': 'Devoir et soumissions supprimés.'})
 
 @app.route('/teacher/manage-questions')
 def teacher_manage_questions():
@@ -526,13 +538,16 @@ def student_manage_exams():
     student_class = cursor.fetchone()['class']
     # Récupérer les devoirs de cette classe
     cursor.execute('''
-        SELECT U.nom as teacher_name, E.speciality, E.class, E.descrp, E.created_at, E.deadline, E.file_path, E.file_path_corr
+        SELECT U.nom as teacher_name, E.idExam, E.speciality, E.class, E.descrp, E.created_at, E.deadline, E.file_path, E.file_path_corr
         FROM Exams E
         JOIN Users U ON U.idUser = E.idTeacher
         WHERE E.class = %s
         ORDER BY E.created_at DESC
     ''', (student_class,))
     exams = cursor.fetchall()
+    # Récupérer les examens déjà soumis par l'étudiant
+    cursor.execute('SELECT idExam FROM Submissions WHERE idStudent = %s', (student_id,))
+    submitted_exam_ids = set(row['idExam'] for row in cursor.fetchall())
     columns = [
         ('teacher_name', 'Enseignant'),
         ('speciality', 'Matière'),
@@ -543,7 +558,14 @@ def student_manage_exams():
         ('file_path', 'Énoncé'),
         ('file_path_corr', 'Correction')
     ]
-    return render_template('student/manageExams/index.html', exams=exams, columns=columns)
+    # Convertir deadline en string pour chaque exam
+    for exam in exams:
+        if isinstance(exam['deadline'], (str, type(None))):
+            continue
+        exam['deadline'] = exam['deadline'].strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return render_template('student/manageExams/index.html', exams=exams, columns=columns, now=now_str, submitted_exam_ids=submitted_exam_ids)
 
 @app.route('/student/manage-questions')
 def student_manage_questions():
@@ -721,6 +743,65 @@ def teacher_add_correction(exam_id):
     cursor.execute('UPDATE Exams SET file_path_corr = %s WHERE idExam = %s AND idTeacher = %s', (file_path_corr, exam_id, teacher_id))
     mysql.connection.commit()
     return jsonify({'success': True})
+
+
+@app.route('/teacher/correction-submissions')
+def teacher_correction_submissions():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    return render_template('teacher/correctionSubmissions/index.html')
+
+@app.route('/admin/delete-submission/<int:submission_id>', methods=['POST'])
+def admin_delete_submission(submission_id):
+    if session.get('role') != 'admin':
+        return {'success': False, 'message': 'Non autorisé'}
+    cur = mysql.connection.cursor()
+    cur.execute('DELETE FROM Submissions WHERE idSubmission = %s', (submission_id,))
+    mysql.connection.commit()
+    cur.close()
+    return {'success': True, 'message': 'Soumission supprimée.'}
+
+@app.route('/student/submit-exam', methods=['POST'])
+def student_submit_exam():
+    if session.get('role') != 'student':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    student_id = session.get('user_id')
+    exam_descrp = request.form.get('exam_descrp')
+    speciality = request.form.get('speciality')
+    class_value = request.form.get('class')
+    exam_file_path = request.form.get('exam_file_path')
+    deadline = request.form.get('deadline')
+    created_at = request.form.get('created_at')
+    file_path_corr = request.form.get('file_path_corr')
+    file = request.files.get('submissionFile')
+    if not file or file.filename == '':
+        return jsonify({'success': False, 'message': 'Aucun fichier sélectionné.'})
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'Type de fichier non autorisé.'})
+    # Vérifier deadline
+    from datetime import datetime
+    if deadline and datetime.now() > datetime.strptime(deadline, '%Y-%m-%d %H:%M:%S'):
+        return jsonify({'success': False, 'message': 'Deadline dépassée.'})
+    # Trouver l'idExam correspondant
+    cursor = mysql.connection.cursor()
+    cursor.execute('''SELECT idExam FROM Exams WHERE descrp = %s AND speciality = %s AND class = %s AND created_at = %s''',
+                   (exam_descrp, speciality, class_value, created_at))
+    exam = cursor.fetchone()
+    if not exam:
+        return jsonify({'success': False, 'message': 'Examen introuvable.'})
+    idExam = exam['idExam']
+    # Vérifier si déjà soumis
+    cursor.execute('SELECT idSubmission FROM Submissions WHERE idStudent = %s AND idExam = %s', (student_id, idExam))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Vous avez déjà soumis ce devoir.'})
+    filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(save_path)
+    file_path = f'database/{filename}'
+    cursor.execute('''INSERT INTO Submissions (idStudent, idExam, file_path, submitted_at) VALUES (%s, %s, %s, NOW())''',
+                   (student_id, idExam, file_path))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Soumission enregistrée.'})
 
 if __name__ == '__main__':
     app.run(debug=True)

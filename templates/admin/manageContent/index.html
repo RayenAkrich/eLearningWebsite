@@ -19,7 +19,8 @@
         <div class="content-btns">
             <button id="showQuestionsBtn" class="content-btn active">Gestion des questions</button>
             <button id="showLessonsBtn" class="content-btn">Gestion des cours</button>
-            <button id="showExamsBtn" class="content-btn">Gestion des Séries/Exams</button>
+            <button id="showExamsBtn" class="content-btn">Gestion des séries/exams</button>
+            <button id="showSubmissionsBtn" class="content-btn">Gestion des soumissions</button>
         </div>
         <div id="questionsTableContainer" class="container-table active">
             <h2>Questions</h2>
@@ -132,7 +133,43 @@
                 </table>
             </div>
         </div>
+        <div id="submissionsTableContainer" class="container-table">
+            <h2>Soumissions des étudiants</h2>
+            <div class="table-responsive">
+                <table id="adminSubmissionsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Étudiant</th>
+                            <th>Classe</th>
+                            <th>Matière</th>
+                            <th>Devoir</th>
+                            <th>Fichier</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                        <tr>
+                            <td>{{ sub['idSubmission'] }}</td>
+                            <td>{{ sub['student_name'] }}</td>
+                            <td>{{ sub['student_class'] }}</td>
+                            <td>{{ sub['speciality'] }}</td>
+                            <td>{{ sub['exam_descrp'] }}</td>
+                            <td>{% if sub['file_path'] %}<a href="{{ url_for('download_database_file', filename=sub['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td>{{ sub['submitted_at'] }}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteSubmission({{ sub['idSubmission'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div id="manageContentPopup" class="popup-message" style="display:none;"></div>
+        <div id="manageSubmissionsPopup" class="popup-message" style="display:none;"></div>
     </main>
     <script src="{{ url_for('static', filename='manageContent.js') }}"></script>
 </body>

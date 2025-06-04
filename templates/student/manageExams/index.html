@@ -25,6 +25,7 @@
                             {% for col, label in columns %}
                             <th>{{ label }}</th>
                             {% endfor %}
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,12 +40,79 @@
                                     <td>{{ exam[col] }}</td>
                                 {% endif %}
                             {% endfor %}
+                            <td>
+                                {% set deadline_passed = exam['deadline'] and exam['deadline'] < now %}
+                                {% set already_submitted = exam['idExam'] in submitted_exam_ids %}
+                                {% if already_submitted %}
+                                    <span style="color: #888; font-weight: 600;">Déjà soumis</span>
+                                {% elif not exam['file_path_corr'] and not deadline_passed %}
+                                    <button class="btn btn-secondary" onclick="openSubmissionModal('{{ exam['descrp']|escape }}', '{{ exam['speciality']|escape }}', '{{ exam['class']|escape }}', '{{ exam['file_path']|escape }}', '{{ exam['deadline']|escape }}', '{{ exam['created_at']|escape }}', '{{ exam['file_path_corr']|escape }}', {{ loop.index0 }})">Soumission Travail Individuel</button>
+                                {% elif exam['file_path_corr'] %}
+                                    <span style="color: #388e3c; font-weight: 600;">Corrigé</span>
+                                {% elif deadline_passed %}
+                                    <span style="color: #d32f2f; font-weight: 600;">Deadline dépassée</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+        <!-- Modal de soumission -->
+        <div id="submissionModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeSubmissionModal()">&times;</span>
+                <h3>Soumettre mon travail</h3>
+                <form id="submissionForm" enctype="multipart/form-data">
+                    <input type="hidden" name="exam_descrp" id="modalExamDescrp">
+                    <input type="hidden" name="speciality" id="modalSpeciality">
+                    <input type="hidden" name="class" id="modalClass">
+                    <input type="hidden" name="exam_file_path" id="modalExamFilePath">
+                    <input type="hidden" name="deadline" id="modalDeadline">
+                    <input type="hidden" name="created_at" id="modalCreatedAt">
+                    <input type="hidden" name="file_path_corr" id="modalFilePathCorr">
+                    <div class="form-group">
+                        <label for="submissionFile">Fichier à soumettre :</label>
+                        <input type="file" name="submissionFile" id="submissionFile" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Envoyer</button>
+                </form>
+                <div id="submissionMessage" class="popup-message" style="display:none;"></div>
+            </div>
+        </div>
+        <script src="{{ url_for('static', filename='manageExams.js') }}"></script>
+        <script>
+        function openSubmissionModal(descrp, speciality, className, filePath, deadline, createdAt, filePathCorr, rowIndex) {
+            document.getElementById('submissionModal').style.display = 'flex';
+            document.getElementById('modalExamDescrp').value = descrp;
+            document.getElementById('modalSpeciality').value = speciality;
+            document.getElementById('modalClass').value = className;
+            document.getElementById('modalExamFilePath').value = filePath;
+            document.getElementById('modalDeadline').value = deadline;
+            document.getElementById('modalCreatedAt').value = createdAt;
+            document.getElementById('modalFilePathCorr').value = filePathCorr;
+        }
+        function closeSubmissionModal() {
+            document.getElementById('submissionModal').style.display = 'none';
+            document.getElementById('submissionForm').reset();
+            document.getElementById('submissionMessage').style.display = 'none';
+        }
+        document.getElementById('submissionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const res = await fetch('/student/submit-exam', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            const msg = document.getElementById('submissionMessage');
+            msg.textContent = data.message;
+            msg.className = 'popup-message ' + (data.success ? 'success' : 'error');
+            msg.style.display = 'block';
+            if (data.success) setTimeout(() => { location.reload(); }, 1200);
+        });
+        </script>
     </main>
 </body>
 </html>
