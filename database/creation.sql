@@ -99,7 +99,7 @@ use elearningdb;
 insert into Users values (1,"admin","admin@gmail.com","scrypt:32768:8:1$3Nu6gudqj3FqXT2Z$9ae6bb6559c76965df52efb669c813ab99de6e3448f5f840567dc7f2f34abfed85cd2d36767f558aaf914ea932bc6bf39c4affea95a50abc29d9236a9e5b491b",null,"admin",null,null,'2025-05-24 19:55:08',null,null);
 
 use elearningdb;
-select * from users;
+select * from Users;
 select * from loginRequest;
 select * from Submissions;
 select * from Courses;

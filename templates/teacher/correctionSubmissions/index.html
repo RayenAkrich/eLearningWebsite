@@ -1,3 +1,97 @@
-
-<h2>Correction des soumissions</h2>
-<p>Page à développer.</p>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Correction des soumissions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Correction des soumissions</h2>
+            <div class="table-responsive">
+                <table id="teacherCorrectionSubmissionsTable">
+                    <thead>
+                        <tr>
+                            <th>Titre examen</th>
+                            <th>Nom élève</th>
+                            <th>Classe</th>
+                            <th>Fichier soumis</th>
+                            <th>Date soumission</th>
+                            <th>Note</th>
+                            <th>Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                        <tr>
+                            <td>{{ sub['exam_title'] }}</td>
+                            <td>{{ sub['student_name'] }}</td>
+                            <td>{{ sub['class_name'] }}</td>
+                            <td>{% if sub['file_path'] %}<a href="{{ url_for('download_database_file', filename=sub['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td>{{ sub['submitted_at'] }}</td>
+                            <td>
+                                {% if sub['grade'] is not none %}
+                                    {{ sub['grade'] }}
+                                {% else %}
+                                    <button class="btn btn-secondary" onclick="openGradeModal({{ sub['idSubmission'] }})">Ajouter</button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sub['feedback'] %}
+                                    {{ sub['feedback'] }}
+                                {% else %}
+                                    <button class="btn btn-secondary" onclick="openFeedbackModal({{ sub['idSubmission'] }})">Ajouter</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Modal Note -->
+        <div id="gradeModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeGradeModal()">&times;</span>
+                <h3>Ajouter une note</h3>
+                <form id="gradeForm">
+                    <input type="hidden" name="idSubmission" id="gradeSubmissionId">
+                    <div class="form-group">
+                        <label for="gradeValue">Note :</label>
+                        <input type="number" min="0" max="20" step="0.25" name="grade" id="gradeValue" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </form>
+                <div id="gradeMessage" class="popup-message" style="display:none;"></div>
+            </div>
+        </div>
+        <!-- Modal Feedback -->
+        <div id="feedbackModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeFeedbackModal()">&times;</span>
+                <h3>Ajouter un feedback</h3>
+                <form id="feedbackForm">
+                    <input type="hidden" name="idSubmission" id="feedbackSubmissionId">
+                    <div class="form-group">
+                        <label for="feedbackValue">Feedback :</label>
+                        <textarea name="feedback" id="feedbackValue" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </form>
+                <div id="feedbackMessage" class="popup-message" style="display:none;"></div>
+            </div>
+        </div>
+    </main>
+    <script src="{{ url_for('static', filename='teacherCorrectionSubmissions.js') }}"></script>
+</body>
+</html>

@@ -749,7 +749,19 @@ def teacher_add_correction(exam_id):
 def teacher_correction_submissions():
     if session.get('role') != 'teacher':
         return redirect(url_for('login'))
-    return render_template('teacher/correctionSubmissions/index.html')
+    teacher_id = session.get('user_id')
+    cur = mysql.connection.cursor()
+    cur.execute('''
+        SELECT s.idSubmission, e.descrp AS exam_title, u.nom AS student_name, u.class AS class_name, s.file_path, s.submitted_at, s.grade, s.feedback
+        FROM Submissions s
+        JOIN Exams e ON s.idExam = e.idExam
+        JOIN Users u ON s.idStudent = u.idUser
+        WHERE e.idTeacher = %s
+        ORDER BY s.submitted_at DESC
+    ''', (teacher_id,))
+    submissions = cur.fetchall()
+    cur.close()
+    return render_template('teacher/correctionSubmissions/index.html', submissions=submissions)
 
 @app.route('/admin/delete-submission/<int:submission_id>', methods=['POST'])
 def admin_delete_submission(submission_id):
@@ -802,6 +814,38 @@ def student_submit_exam():
                    (student_id, idExam, file_path))
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Soumission enregistrée.'})
+
+@app.route('/teacher/add-grade', methods=['POST'])
+def teacher_add_grade():
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    data = request.get_json()
+    idSubmission = data.get('idSubmission')
+    grade = data.get('grade')
+    if not idSubmission or grade is None:
+        return jsonify({'success': False, 'message': 'Champs manquants.'})
+    try:
+        grade = float(grade)
+    except Exception:
+        return jsonify({'success': False, 'message': 'Note invalide.'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('UPDATE Submissions SET grade = %s WHERE idSubmission = %s', (grade, idSubmission))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Note enregistrée.'})
+
+@app.route('/teacher/add-feedback', methods=['POST'])
+def teacher_add_feedback():
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    data = request.get_json()
+    idSubmission = data.get('idSubmission')
+    feedback = data.get('feedback', '').strip()
+    if not idSubmission or not feedback:
+        return jsonify({'success': False, 'message': 'Champs manquants.'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('UPDATE Submissions SET feedback = %s WHERE idSubmission = %s', (feedback, idSubmission))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Feedback enregistré.'})
 
 if __name__ == '__main__':
     app.run(debug=True)
