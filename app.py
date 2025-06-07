@@ -847,5 +847,19 @@ def teacher_add_feedback():
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Feedback enregistré.'})
 
+@app.route('/student/online-sessions')
+def student_online_sessions():
+    if session.get('role') != 'student':
+        return redirect(url_for('login'))
+    # Placeholder: à implémenter plus tard
+    return render_template('student/onlineSessions/index.html')
+
+@app.route('/teacher/online-sessions')
+def teacher_online_sessions():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    # Placeholder: à implémenter plus tard
+    return render_template('teacher/onlineSessions/index.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
