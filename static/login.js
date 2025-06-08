@@ -2,18 +2,17 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('login-form');
-    const showPassword = document.getElementById('show-password');
+    const passwordToggle = document.getElementById('password-toggle');
     const passwordInput = document.getElementById('password');
     const errorMessage = document.getElementById('error-message');
 
     // Afficher/masquer le mot de passe
-    showPassword.addEventListener('change', function () {
-        passwordInput.type = this.checked ? 'text' : 'password';
-        passwordInput.style.width='80%';
-        passwordInput.style.padding='0.8rem';
-        passwordInput.style.border = '1px solid #ccc';
-        passwordInput.style.borderRadius = '5px';
-        passwordInput.style.fontSize = '1rem';
+    passwordToggle.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);        
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
     });
 
     // Gestion de la soumission du formulaire
@@ -34,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => response.json())
             .then(data => {
-                console.log('DATA:', data); // DEBUG
                 if (data.success) {
                     // Rediriger selon le rôle
                     if (data.role === 'admin') {

@@ -244,7 +244,26 @@ def admin_delete_exam(exam_id):
 
 @app.route('/admin/manage-sessions')
 def manage_sessions():
-    return 'Gestion des séances (à implémenter)'
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    cursor.execute('''
+        SELECT s.idSession, u.nom AS teacher_name, s.class, s.timedate, s.descrp, s.link
+        FROM onlineSessions s
+        JOIN Users u ON u.idUser = s.idTeacher
+        ORDER BY s.timedate DESC
+    ''')
+    sessions = cursor.fetchall()
+    return render_template('admin/manageSessions/index.html', sessions=sessions)
+
+@app.route('/admin/delete-session/<int:session_id>', methods=['POST'])
+def admin_delete_session(session_id):
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM onlineSessions WHERE idSession = %s', (session_id,))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Séance supprimée.'})
 
 @app.route('/admin/edit-account')
 def admin_edit_account():
@@ -851,15 +870,78 @@ def teacher_add_feedback():
 def student_online_sessions():
     if session.get('role') != 'student':
         return redirect(url_for('login'))
-    # Placeholder: à implémenter plus tard
-    return render_template('student/onlineSessions/index.html')
+    student_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Récupérer la classe de l'étudiant
+    cursor.execute('SELECT class FROM Users WHERE idUser = %s', (student_id,))
+    student_class = cursor.fetchone()['class']
+    # Récupérer les séances à venir pour la classe de l'étudiant
+    from datetime import datetime
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute('''
+        SELECT speciality, timedate, descrp, link FROM onlineSessions
+        WHERE class = %s AND timedate >= %s
+        ORDER BY timedate ASC
+    ''', (student_class, now))
+    sessions = cursor.fetchall()
+    return render_template('student/onlineSessions/index.html', sessions=sessions)
 
 @app.route('/teacher/online-sessions')
 def teacher_online_sessions():
     if session.get('role') != 'teacher':
         return redirect(url_for('login'))
-    # Placeholder: à implémenter plus tard
-    return render_template('teacher/onlineSessions/index.html')
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Récupérer la spécialité de l'enseignant
+    cursor.execute('SELECT speciality FROM Users WHERE idUser = %s', (teacher_id,))
+    teacher_speciality = cursor.fetchone()['speciality']
+    # Mapping des classes autorisées selon la spécialité
+    matieres_by_classe = {
+        'SVT': ['1er Année', '2eme Science', '3eme Science', '3eme Mathématiques', 'Bac Math', 'Bac science'],
+        'Arabe': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+        'Mathématique': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+        'Physique': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+        'Francais': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+        'Anglais':  ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+        'Technique': ['3eme Technique', 'Bac Technique'],
+        'Philosophie': ['3eme Science', '3eme Mathématiques', '3eme Technique', '3eme Informatique', 'Bac Info', 'Bac Technique', 'Bac Math', 'Bac science'],
+        'Informatique': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+    }
+    allowed_classes = matieres_by_classe.get(teacher_speciality, [])
+    cursor.execute('SELECT idSession, class, timedate, descrp, link FROM onlineSessions WHERE idTeacher = %s ORDER BY timedate DESC', (teacher_id,))
+    sessions = cursor.fetchall()
+    return render_template('teacher/onlineSessions/index.html', sessions=sessions, allowed_classes=allowed_classes)
+
+@app.route('/teacher/add-session', methods=['POST'])
+def teacher_add_session():
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    data = request.get_json()
+    class_value = data.get('class', '').strip()
+    timedate = data.get('timedate', '').strip()
+    descrp = data.get('descrp', '').strip()
+    link = data.get('link', '').strip()
+    # Récupérer la spécialité de l'enseignant
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT speciality FROM Users WHERE idUser = %s', (teacher_id,))
+    speciality = cursor.fetchone()['speciality']
+    if not class_value or not timedate or not link:
+        return jsonify({'success': False, 'message': 'Champs obligatoires manquants.'})
+    cursor.execute('INSERT INTO onlineSessions (idTeacher, class, timedate, descrp, link, speciality) VALUES (%s, %s, %s, %s, %s, %s)',
+                   (teacher_id, class_value, timedate, descrp, link, speciality))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Séance ajoutée.'})
+
+@app.route('/teacher/delete-session/<int:session_id>', methods=['POST'])
+def teacher_delete_session(session_id):
+    if session.get('role') != 'teacher':
+        return jsonify({'success': False, 'message': 'Non autorisé.'})
+    teacher_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM onlineSessions WHERE idSession = %s AND idTeacher = %s', (session_id, teacher_id))
+    mysql.connection.commit()
+    return jsonify({'success': True, 'message': 'Séance supprimée.'})
 
 if __name__ == '__main__':
     app.run(debug=True)

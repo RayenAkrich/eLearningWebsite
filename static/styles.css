@@ -55,7 +55,6 @@ body.login-page {
 }
 
 .btn.btn-primary:hover {
-    border: 2px solid white;
     background-color: #004aad;
     color: #f4c430;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -132,8 +131,7 @@ body.login-page {
 }
 .form-group input[type="text"],
 .form-group input[type="password"],
-.form-group input[type="email"],
-.form-group input[type="password"] {
+.form-group input[type="email"]{
     width: 80%;
     padding: 0.8rem;
     border: 1px solid #ccc;

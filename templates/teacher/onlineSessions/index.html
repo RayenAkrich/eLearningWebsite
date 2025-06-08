@@ -3,9 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <title>Séances en ligne - Enseignant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Séances en ligne (à venir)</h1>
-    <p>Cette page sera développée prochainement.</p>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Mes séances en ligne</h2>
+            <button class="btn btn-primary" onclick="showAddSessionForm()" style="margin-bottom:1rem;">Ajouter une séance</button>
+            <div class="table-responsive">
+                <table id="sessionsTable">
+                    <thead>
+                        <tr>
+                            <th>Classe</th>
+                            <th>Date et heure</th>
+                            <th>Description</th>
+                            <th>Lien</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr>
+                            <td>{{ session['class'] }}</td>
+                            <td>{{ session['timedate'] }}</td>
+                            <td>{{ session['descrp'] }}</td>
+                            <td>{% if session['link'] %}<a href="{{ session['link'] }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteSession({{ session['idSession'] }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="addSessionModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeAddSessionForm()">&times;</span>
+                <h3>Ajouter une séance en ligne</h3>
+                <form id="addSessionForm" autocomplete="off">
+                    <div class="form-group">
+                        <label for="class">Classe *</label>
+                        <select id="class" name="class" required>
+                            <option value="">Choisir la classe</option>
+                            {% for cl in allowed_classes %}
+                                <option value="{{ cl }}">{{ cl }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="timedate">Date et heure *</label>
+                        <input type="datetime-local" id="timedate" name="timedate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descrp">Description</label>
+                        <input type="text" id="descrp" name="descrp">
+                    </div>
+                    <div class="form-group">
+                        <label for="link">Lien de la séance *</label>
+                        <input type="url" id="link" name="link" required placeholder="https://...">
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddSessionForm()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="addSessionPopup" class="popup-message" style="display:none;"></div>
+        <p id="manageSessionsMessage" class="popup-message"></p>
+    </main>
+    <script src="{{ url_for('static', filename='teacherOnlineSessions.js') }}"></script>
 </body>
 </html>

@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil - Plateforme d'Apprentissage en Ligne</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Barre de navigation -->
@@ -15,21 +16,42 @@
         </div>
         <nav>
             <ul class="nav-links">
-                <li><a href="{{ url_for('login') }}" class="btn btn-secondary">Connexion</a></li>
-                <li><a href="{{ url_for('signup') }}" class="btn btn-primary">Inscription</a></li>
+                <li><a href="{{ url_for('login') }}" class="btn btn-secondary"><i class="fas fa-user-circle"></i>Connexion</a></li>
+                <li><a href="{{ url_for('signup') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i>Inscription</a></li>
             </ul>
         </nav>
     </header>
 
     <!-- Section principale -->
     <section class="hero">
-        <div class="hero-content">
-            <h1>Bienvenue sur notre plateforme d'apprentissage en ligne</h1>
-            <p>Apprenez, enseignez, et collaborez où que vous soyez avec des cours interactifs, des sessions en ligne, et bien plus.</p>
-            <div class="hero-buttons">
-                <a href="{{ url_for('signup') }}" class="btn btn-primary">Commencer maintenant</a>
-                <a href="{{ url_for('login') }}" class="btn btn-secondary">Se connecter</a>
+        <div class="hero-background">
+            <div class="floating-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+                <div class="shape shape-4"></div>
+                <div class="shape shape-5"></div>
             </div>
+        </div>
+        <div class="hero-content">
+            <h1>
+                <span class="hero-text-animated">Bienvenue sur notre plateforme</span>
+                <span class="hero-text-highlight">d'apprentissage en ligne</span>
+            </h1>
+            <p class="hero-description">Apprenez, enseignez, et collaborez où que vous soyez avec des cours interactifs, des sessions en ligne, et bien plus.</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('signup') }}" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    Commencer maintenant
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Se connecter
+                </a>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-arrow"></div>
         </div>
     </section>
 
@@ -37,21 +59,46 @@
     <section class="benefits">
         <h2>Pourquoi choisir notre plateforme ?</h2>
         <div class="benefits-grid">
-            <div class="benefit-card">
+            <div class="benefit-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="benefit-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
                 <h3>Pour les étudiants</h3>
                 <p>Accédez à des cours de qualité, participez à des sessions en ligne, et soumettez vos devoirs facilement.</p>
+                <div class="benefit-features">
+                    <span class="feature-tag"><i class="fas fa-check"></i> Cours interactifs</span>
+                    <span class="feature-tag"><i class="fas fa-check"></i> Sessions en direct</span>
+                    <span class="feature-tag"><i class="fas fa-check"></i> Suivi personnalisé</span>
+                </div>
             </div>
-            <div class="benefit-card">
+            <div class="benefit-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="benefit-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
                 <h3>Pour les enseignants</h3>
                 <p>Gérez vos cours, créez des devoirs, et interagissez avec vos étudiants en temps réel.</p>
+                <div class="benefit-features">
+                    <span class="feature-tag"><i class="fas fa-check"></i> Gestion simplifiée</span>
+                    <span class="feature-tag"><i class="fas fa-check"></i> Outils créatifs</span>
+                    <span class="feature-tag"><i class="fas fa-check"></i> Analytics détaillés</span>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Pied de page -->
     <footer class="footer">
-        <p>&copy; 2025 by Rayen Akriche. Tous droits réservés.</p>
+        <div class="footer-content">
+            <p>&copy; 2025 by Rayen Akriche. Tous droits réservés.</p>
+            <div class="footer-social">
+                <a href="https://www.facebook.com/rayen.akrich.0/" class="social-link"><i class="fab fa-facebook"></i></a>
+                <a href="https://github.com/RayenAkrich" class="social-link"><i class="fab fa-github"></i></a>
+                <a href="https://www.linkedin.com/in/akricherayen/" class="social-link"><i class="fab fa-linkedin"></i></a>
+                <a href="https://www.instagram.com/rayen._.akrich/" class="social-link"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
     </footer>
-
+    
+    <script src="{{ url_for('static', filename='home.js') }}"></script>
 </body>
 </html>

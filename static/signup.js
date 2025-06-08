@@ -7,39 +7,30 @@ document.addEventListener('DOMContentLoaded', function () {
     const classGroup = document.getElementById('class-group');
     const specialityGroup = document.getElementById('speciality-group');
     const errorMessage = document.getElementById('error-message');
-    const showPassword = document.getElementById('show-password');
+    const passwordToggle = document.getElementById('password-toggle');
     const passwordInput = document.getElementById('mdp');
 
     // Afficher/masquer le mot de passe
-    showPassword.addEventListener('change', function () {
-        passwordInput.type = this.checked ? 'text' : 'password';
-        passwordInput.style.width='80%';
-        passwordInput.style.padding='0.8rem';
-        passwordInput.style.border = '1px solid #ccc';
-        passwordInput.style.borderRadius = '5px';
-        passwordInput.style.fontSize = '1rem';
+    passwordToggle.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);        
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
     });
 
-    // Affichage conditionnel des champs selon le rôle
-    rolesSelect.addEventListener('change', function () {
+    // Show/hide class and speciality based on role
+    rolesSelect.addEventListener('change', function() {
         if (this.value === 'student') {
             classGroup.style.display = 'block';
             specialityGroup.style.display = 'none';
-            document.getElementById('class').required = true;
-            document.getElementById('speciality').required = false;
         } else if (this.value === 'teacher') {
             classGroup.style.display = 'none';
             specialityGroup.style.display = 'block';
-            document.getElementById('class').required = false;
-            document.getElementById('speciality').required = true;
         } else {
             classGroup.style.display = 'none';
             specialityGroup.style.display = 'none';
-            document.getElementById('class').required = false;
-            document.getElementById('speciality').required = false;
         }
-        document.getElementById('class').selectedIndex = 0;
-        document.getElementById('speciality').selectedIndex = 0;
     });
 
     signupForm.addEventListener('submit', function (e) {

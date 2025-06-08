@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mes séances en ligne</title>
+    <title>Gestion des séances en ligne</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -10,37 +10,45 @@
         <div class="logo"><h1>eLearning</h1></div>
         <nav>
             <ul class="nav-links">
-                <li><a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
+                <li><a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
                 <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
             </ul>
         </nav>
     </header>
     <main class="form-main">
         <div class="table-container">
-            <h2>Mes séances en ligne</h2>
+            <h2>Toutes les séances en ligne</h2>
             <div class="table-responsive">
-                <table id="sessionsTable">
+                <table id="adminSessionsTable">
                     <thead>
                         <tr>
-                            <th>Matière</th>
+                            <th>Enseignant</th>
+                            <th>Classe</th>
                             <th>Date et heure</th>
                             <th>Description</th>
                             <th>Lien</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for session in sessions %}
                         <tr>
-                            <td>{{ session['speciality'] }}</td>
+                            <td>{{ session['teacher_name'] }}</td>
+                            <td>{{ session['class'] }}</td>
                             <td>{{ session['timedate'] }}</td>
                             <td>{{ session['descrp'] }}</td>
                             <td>{% if session['link'] %}<a href="{{ session['link'] }}" target="_blank">Ouvrir</a>{% endif %}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteSession({{ session['idSession'] }})">Supprimer</button>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+        <div id="manageSessionsPopup" class="popup-message" style="display:none;"></div>
     </main>
+    <script src="{{ url_for('static', filename='adminManageSessions.js') }}"></script>
 </body>
 </html>
