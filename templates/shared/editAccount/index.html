@@ -43,7 +43,7 @@
                 <div class="form-group">
                     <div class="input-container">
                         <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="nom" name="nom" required placeholder=" ">
+                        <input type="text" id="nom" name="nom" required placeholder=" " value="{{ user.nom }}">
                         <label for="nom">Nom</label>
                         <div class="input-border"></div>
                     </div>
@@ -51,7 +51,7 @@
                 <div class="form-group">
                     <div class="input-container">
                         <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="email" name="email" required placeholder=" ">
+                        <input type="email" id="email" name="email" required placeholder=" " value="{{ user.email }}">
                         <label for="email">Email</label>
                         <div class="input-border"></div>
                     </div>
@@ -59,7 +59,7 @@
                 <div class="form-group">
                     <div class="input-container">
                         <i class="fas fa-phone input-icon"></i>
-                        <input type="text" id="phone" name="phone" required maxlength="8" pattern="\d{8}" placeholder=" ">
+                        <input type="text" id="phone" name="phone" required maxlength="8" pattern="\d{8}" placeholder=" " value="{{ user.phone }}">
                         <label for="phone">Téléphone</label>
                         <div class="input-border"></div>
                     </div>
