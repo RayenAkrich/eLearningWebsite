@@ -5,21 +5,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('editAccountForm');
     const messageDiv = document.getElementById('editAccountMessage');
 
-    // Afficher/masquer les mots de passe (hors submit !)
-    const showOldPassword = document.getElementById('show-old-password');
-    const oldPasswordInput = document.getElementById('old_mdp');
-    if (showOldPassword && oldPasswordInput) {
-        showOldPassword.addEventListener('change', function () {
-            oldPasswordInput.type = this.checked ? 'text' : 'password';
+    // Afficher/masquer le mot de passe
+        const passwordToggleNew = document.getElementById('password-toggle-new');
+        const passwordInputNew = document.getElementById('new_mdp');
+        passwordToggleNew.addEventListener('click', function() {
+            const type = passwordInputNew.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInputNew.setAttribute('type', type);        
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         });
-    }
-    const showNewPassword = document.getElementById('show-new-password');
-    const newPasswordInput = document.getElementById('new_mdp');
-    if (showNewPassword && newPasswordInput) {
-        showNewPassword.addEventListener('change', function () {
-            newPasswordInput.type = this.checked ? 'text' : 'password';
+        const passwordToggleOld = document.getElementById('password-toggle-old');
+        const passwordInputOld = document.getElementById('old_mdp');
+        passwordToggleOld.addEventListener('click', function() {
+            const type = passwordInputOld.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInputOld.setAttribute('type', type);
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         });
-    }
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
