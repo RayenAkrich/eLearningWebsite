@@ -4,21 +4,22 @@
     <meta charset="UTF-8">
     <title>Séances en ligne - Enseignant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header class="navbar">
         <div class="logo"><h1>eLearning</h1></div>
         <nav>
             <ul class="nav-links">
-                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
-                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary"><i class="fas fa-home"></i>Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
             </ul>
         </nav>
     </header>
     <main class="form-main">
         <div class="table-container">
             <h2>Mes séances en ligne</h2>
-            <button class="btn btn-primary" onclick="showAddSessionForm()" style="margin-bottom:1rem;">Ajouter une séance</button>
+            <button class="btn btn-primary" onclick="showAddSessionForm()" style="margin-bottom:1rem;"><i class="fas fa-plus"></i>Ajouter une séance</button>
             <div class="table-responsive">
                 <table id="sessionsTable">
                     <thead>
@@ -79,7 +80,6 @@
                 </form>
             </div>
         </div>
-        <div id="addSessionPopup" class="popup-message" style="display:none;"></div>
         <p id="manageSessionsMessage" class="popup-message"></p>
     </main>
     <script src="{{ url_for('static', filename='teacherOnlineSessions.js') }}"></script>

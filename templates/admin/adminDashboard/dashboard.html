@@ -2,20 +2,23 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header class="navbar">
-        <div class="logo"><h1>Admin Dashboard</h1></div>
+        <div class="logo"><h1>&nbsp;&nbsp;<i class="fas fa-user"></i>&nbsp;&nbsp;Admin Dashboard</h1></div>
         <nav>
             <ul class="nav-links">
-                <li><a href="{{ url_for('admin_dashboard') }}">Accueil</a></li>
-                <li><a href="{{ url_for('manage_accounts') }}">Gestion Comptes</a></li>
-                <li><a href="{{ url_for('admin_manage_content') }}">Gestion Contenu</a></li>
-                <li><a href="{{ url_for('manage_sessions') }}">Gestion Séances</a></li>
-                <li><a href="{{ url_for('edit_account') }}">Gestion Profil</a></li>
-                <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+                <li><a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i>Accueil</a></li>
+                <li><a href="{{ url_for('manage_accounts') }}"><i class="fas fa-users"></i>Gestion Comptes</a></li>
+                <li><a href="{{ url_for('admin_manage_content') }}"><i class="fas fa-book"></i>Gestion Contenu</a></li>
+                <li><a href="{{ url_for('manage_sessions') }}"><i class="fas fa-calendar"></i>Gestion Séances</a></li>
+                <li><a href="{{ url_for('edit_account') }}"><i class="fas fa-user-cog"></i>Gestion Profil</a></li>
+                <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
             </ul>
         </nav>
     </header>
@@ -24,42 +27,31 @@
             <h2>Statistiques</h2>
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h3>Utilisateurs</h3>
+                    <h3><i class="fas fa-users"></i>Utilisateurs</h3>
                     <p>{{ stats.users }}</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Cours</h3>
+                    <h3><i class="fas fa-book"></i>Cours</h3>
                     <p>{{ stats.courses }}</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Questions</h3>
+                    <h3><i class="fas fa-question-circle"></i>Questions</h3>
                     <p>{{ stats.questions }}</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Devoirs</h3>
+                    <h3><i class="fas fa-tasks"></i>Devoirs</h3>
                     <p>{{ stats.exams }}</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Séances</h3>
+                    <h3><i class="fas fa-calendar"></i>Séances</h3>
                     <p>{{ stats.sessions }}</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Comptes non validés</h3>
+                    <h3><i class="fas fa-user-clock"></i>Comptes non validés</h3>
                     <p>{{ stats.pending }}</p>
                 </div>
             </div>
         </section>
-        <section class="quick-actions">
-            <h2>Accès rapide</h2>
-            <div class="actions-grid">
-                <a href="{{ url_for('manage_accounts') }}" class="action-btn">Gestion Comptes</a>
-                <a href="{{ url_for('admin_manage_content') }}" class="action-btn">Gestion Contenu</a>
-                <a href="{{ url_for('manage_sessions') }}" class="action-btn">Gestion Séances</a>
-                <a href="{{ url_for('edit_account') }}" class="action-btn">Gestion Profil</a>
-                <a href="{{ url_for('logout') }}" class="action-btn logout">Déconnexion</a>
-            </div>
-        </section>
     </main>
-    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 </body>
 </html>

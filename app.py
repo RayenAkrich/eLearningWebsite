@@ -787,6 +787,13 @@ def admin_delete_submission(submission_id):
     if session.get('role') != 'admin':
         return {'success': False, 'message': 'Non autorisé'}
     cur = mysql.connection.cursor()
+    # Supprimer le fichier associé à la soumission si présent
+    cur.execute('SELECT file_path FROM Submissions WHERE idSubmission = %s', (submission_id,))
+    row = cur.fetchone()
+    if row and row['file_path']:
+        file_path = os.path.join(app.root_path, row['file_path'])
+        if os.path.exists(file_path):
+            os.remove(file_path)
     cur.execute('DELETE FROM Submissions WHERE idSubmission = %s', (submission_id,))
     mysql.connection.commit()
     cur.close()

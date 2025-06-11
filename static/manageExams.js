@@ -4,7 +4,7 @@ function confirmAction(message, callback) {
 }
 
 function showPopupMessage(msg, type = 'success') {
-    const popup = document.getElementById('addExamPopup');
+    const popup = document.getElementById('addCorrectionPopup');
     popup.textContent = msg;
     popup.className = 'popup-message ' + (type === 'error' ? 'error' : 'success');
     popup.style.display = 'block';
@@ -26,7 +26,7 @@ function showAddExamForm() {
 function closeAddExamForm() {
     document.getElementById('addExamModal').style.display = 'none';
     document.getElementById('addExamForm').reset();
-    document.getElementById('manageExamsMessage').textContent = '';
+    document.getElementById('addCorrectionPopup').textContent = '';
 }
 
 function showAddCorrectionModal(examId) {
@@ -39,6 +39,7 @@ function closeAddCorrectionModal() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('addCorrectionPopup').style.display = 'none';
     document.getElementById('addExamForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const speciality = document.getElementById('speciality').value;
@@ -47,11 +48,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const deadline = document.getElementById('deadline').value;
         const fileInput = document.getElementById('file_path');
         const fileCorrInput = document.getElementById('file_path_corr');
-        const msgElem = document.getElementById('manageExamsMessage');
+        const msgElem = document.getElementById('addCorrectionPopup');
         msgElem.textContent = '';
         if (!speciality || !classValue || !deadline || !fileInput.files.length) {
+            showPopupMessage('Veuillez remplir tous les champs obligatoires.', 'error');
             msgElem.textContent = 'Veuillez remplir tous les champs obligatoires.';
-            msgElem.className = 'error-message';
             return;
         }
         const formData = new FormData();
@@ -73,12 +74,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 showPopupMessage('Devoir ajouté !','success');
                 setTimeout(() => { location.reload(); }, 1200);
             } else {
-                msgElem.textContent = data.message || 'Erreur lors de l\'ajout.';
-                msgElem.className = 'error-message';
+                showPopupMessage(data.error || data.message || 'Erreur lors de l\'ajout.', 'error');
+                msgElem.textContent = data.error || data.message || 'Erreur lors de l\'ajout.';
             }
         } catch {
+            showPopupMessage('Erreur lors de l\'ajout.', 'error');
             msgElem.textContent = 'Erreur lors de l\'ajout.';
-            msgElem.className = 'error-message';
         }
     });
     document.getElementById('addCorrectionForm').addEventListener('submit', async function(e) {
@@ -89,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         popup.textContent = '';
         if (!fileInput.files.length) {
             popup.textContent = 'Veuillez sélectionner un fichier de correction.';
-            popup.className = 'popup-message error';
+            popup.className = 'popup-message';
             popup.style.display = 'block';
             setTimeout(() => { popup.style.display = 'none'; }, 2200);
             return;
@@ -109,19 +110,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => { location.reload(); }, 1200);
             } else {
                 popup.textContent = data.error || data.message || 'Erreur lors de l\'upload.';
-                popup.className = 'popup-message error';
+                popup.className = 'popup-message';
                 popup.style.display = 'block';
             }
         } catch {
             popup.textContent = 'Erreur lors de l\'upload.';
-            popup.className = 'popup-message error';
+            popup.className = 'popup-message';
             popup.style.display = 'block';
         }
     });
 });
 
 function showMessage(msg, success) {
-    const el = document.getElementById('manageExamsMessage');
+    const el = document.getElementById('addCorrectionPopup');
     el.textContent = msg;
     el.style.display = 'block';
     el.style.color = success ? 'green' : 'red';

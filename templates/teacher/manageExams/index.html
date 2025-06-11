@@ -4,21 +4,22 @@
     <meta charset="UTF-8">
     <title>Gestion des devoirs</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header class="navbar">
         <div class="logo"><h1>eLearning</h1></div>
         <nav>
             <ul class="nav-links">
-                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
-                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary"><i class="fas fa-home"></i>Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
             </ul>
         </nav>
     </header>
     <main class="form-main">
         <div class="table-container">
             <h2>Mes devoirs / séries</h2>
-            <button class="btn btn-primary" onclick="showAddExamForm()" style="margin-bottom:1rem;">Ajouter un devoir</button>
+            <button class="btn btn-primary" onclick="showAddExamForm()" style="margin-bottom:1rem;"><i class="fas fa-plus"></i>Ajouter un devoir</button>
             <div class="table-responsive">
                 <table id="examsTable">
                     <thead>
@@ -48,7 +49,7 @@
                             <td class="action-btns">
                                 <button class="btn btn-secondary" onclick="deleteExam({{ exam['idExam'] }})">Supprimer</button>
                                 {% if not exam['file_path_corr'] %}
-                                <button class="bbtn btn-secondary" onclick="showAddCorrectionModal({{ exam['idExam'] }})">Ajouter Correction</button>
+                                <button class="btn btn-secondary" onclick="showAddCorrectionModal({{ exam['idExam'] }})">Ajouter Correction</button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -145,9 +146,7 @@
                 </form>
             </div>
         </div>
-        <div id="addCorrectionPopup" class="popup-message" style="display:none;"></div>
-        <div id="addExamPopup" class="popup-message" style="display:none;"></div>
-        <p id="manageExamsMessage" class="error-message"></p>
+        <div id="addCorrectionPopup" class="popup-message" ></div>
     </main>
     <script src="{{ url_for('static', filename='manageExams.js') }}"></script>
 </body>

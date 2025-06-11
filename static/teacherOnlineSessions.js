@@ -4,7 +4,7 @@ function confirmAction(message, callback) {
 }
 
 function showPopupMessage(msg, type = 'success') {
-    const popup = document.getElementById('addSessionPopup');
+    const popup = document.getElementById('manageSessionsMessage');
     popup.textContent = msg;
     popup.className = 'popup-message ' + (type === 'error' ? 'error' : 'success');
     popup.style.display = 'block';
@@ -27,9 +27,11 @@ function closeAddSessionForm() {
     document.getElementById('addSessionModal').style.display = 'none';
     document.getElementById('addSessionForm').reset();
     document.getElementById('manageSessionsMessage').textContent = '';
+
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('manageSessionsMessage').style.display = 'none';
     document.getElementById('addSessionForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const classValue = this.class.value.trim();
