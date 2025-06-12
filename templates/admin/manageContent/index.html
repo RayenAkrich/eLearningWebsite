@@ -4,23 +4,24 @@
     <meta charset="UTF-8">
     <title>Gestion du contenu</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
 </head>
 <body>
     <header class="navbar">
         <div class="logo"><h1>eLearning</h1></div>
         <nav>
             <ul class="nav-links">
-                <li><a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Dashboard</a></li>
-                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary">Déconnexion</a></li>
+                <li><a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('logout') }}" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Déconnexion</a></li>
             </ul>
         </nav>
     </header>
     <main class="form-main">
         <div class="content-btns">
-            <button id="showQuestionsBtn" class="content-btn active">Gestion des questions</button>
-            <button id="showLessonsBtn" class="content-btn">Gestion des cours</button>
-            <button id="showExamsBtn" class="content-btn">Gestion des séries/exams</button>
-            <button id="showSubmissionsBtn" class="content-btn">Gestion des soumissions</button>
+            <button id="showQuestionsBtn" class="content-btn active"><i class="fas fa-question-circle"></i> Gestion des questions</button>
+            <button id="showLessonsBtn" class="content-btn"><i class="fas fa-book"></i> Gestion des cours</button>
+            <button id="showExamsBtn" class="content-btn"><i class="fas fa-file-alt"></i> Gestion des séries/exams</button>
+            <button id="showSubmissionsBtn" class="content-btn"><i class="fas fa-paper-plane"></i> Gestion des soumissions</button>
         </div>
         <div id="questionsTableContainer" class="container-table active">
             <h2>Questions</h2>

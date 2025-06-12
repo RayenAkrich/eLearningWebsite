@@ -40,18 +40,18 @@
                             <td>{{ sub['class_name'] }}</td>
                             <td>{% if sub['file_path'] %}<a href="{{ url_for('download_database_file', filename=sub['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
                             <td>{{ sub['submitted_at'] }}</td>
-                            <td>
+                            <td class="action-btns">
                                 {% if sub['grade'] is not none %}
                                     {{ sub['grade'] }}
                                 {% else %}
-                                    <button class="btn btn-secondary" onclick="openGradeModal({{ sub['idSubmission'] }})">Ajouter</button>
+                                    <button class="btn btn-secondary" onclick="openGradeModal({{ sub['idSubmission'] }})">Ajouter Une Note</button>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="action-btns">
                                 {% if sub['feedback'] %}
                                     {{ sub['feedback'] }}
                                 {% else %}
-                                    <button class="btn btn-secondary" onclick="openFeedbackModal({{ sub['idSubmission'] }})">Ajouter</button>
+                                    <button class="btn btn-secondary" onclick="openFeedbackModal({{ sub['idSubmission'] }})">Ajouter Un Feedback</button>
                                 {% endif %}
                             </td>
                         </tr>

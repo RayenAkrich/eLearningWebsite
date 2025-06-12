@@ -45,12 +45,15 @@
                             <td>{{ exam['created_at'] }}</td>
                             <td>{{ exam['deadline'] }}</td>
                             <td>{% if exam['file_path'] %}<a href="{{ url_for('download_database_file', filename=exam['file_path'].split('/')[-1]) }}" target="_blank">Ouvrir</a>{% endif %}</td>
-                            <td>{% if exam['file_path_corr'] %}<a href="{{ url_for('download_database_file', filename=exam['file_path_corr'].split('/')[-1]) }}" target="_blank">Correction</a>{% endif %}</td>
+                            {% if exam['file_path_corr'] %}
+                            <td><a href="{{ url_for('download_database_file', filename=exam['file_path_corr'].split('/')[-1]) }}" target="_blank">Correction</a></td>
+                            {% else %}
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="showAddCorrectionModal({{ exam['idExam'] }})">Ajouter</button>
+                            </td>
+                            {% endif %}
                             <td class="action-btns">
                                 <button class="btn btn-secondary" onclick="deleteExam({{ exam['idExam'] }})">Supprimer</button>
-                                {% if not exam['file_path_corr'] %}
-                                <button class="btn btn-secondary" onclick="showAddCorrectionModal({{ exam['idExam'] }})">Ajouter Correction</button>
-                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
