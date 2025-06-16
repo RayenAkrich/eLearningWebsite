@@ -950,5 +950,9 @@ def teacher_delete_session(session_id):
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Séance supprimée.'})
 
+@app.route('/disconnect')
+def disconnect():
+    return render_template('shared/disconnect/index.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
