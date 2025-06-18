@@ -265,10 +265,6 @@ def admin_delete_session(session_id):
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Séance supprimée.'})
 
-@app.route('/admin/edit-account')
-def admin_edit_account():
-    return redirect(url_for('edit_account'))
-
 @app.route('/template/auth/teacher/dashboard')
 def teacher_dashboard():
     if session.get('role') != 'teacher':
@@ -686,7 +682,7 @@ def signup():
     mysql.connection.commit()
     return jsonify({'success': True})
 
-@app.route('/edit_account', methods=['GET', 'POST'])
+@app.route('/edit-account', methods=['GET', 'POST'])
 def edit_account():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -953,6 +949,17 @@ def teacher_delete_session(session_id):
 @app.route('/disconnect')
 def disconnect():
     return render_template('shared/disconnect/index.html')
+
+@app.route('/send-message', methods=['GET', 'POST'])
+def send_message():
+    if request.method == 'POST':
+        # Handle the message sending logic here
+        pass
+    return render_template('shared/sendMessage/index.html')
+
+@app.route('/notifications')
+def notifications():
+    return render_template('shared/notifications/index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
