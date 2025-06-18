@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Messages envoyés</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo"><h1>eLearning</h1></div>
+        <nav>
+            <ul class="nav-links">
+                {% if session['role'] == 'admin' %}
+                <li><a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-home"></i>Dashboard</a></li>
+                {% elif session['role'] == 'teacher' %}
+                <li><a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary"><i class="fas fa-home"></i>Dashboard</a></li>
+                {% elif session['role'] == 'student' %}
+                <li><a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary"><i class="fas fa-home"></i>Dashboard</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('disconnect') }}" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-main">
+        <div class="table-container">
+            <h2>Messages envoyés</h2>
+            <button id="openFormBtn" class="btn btn-primary" style="margin-bottom:1rem;"><i class="fas fa-plus"></i>Envoyer un message</button>
+            <div class="table-responsive">
+                <table id="messagesTable">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Destinataire</th>
+                            <th>Classe</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in sent_messages %}
+                        <tr>
+                            <td>{{ msg.classification }}</td>
+                            <td>{{ msg.message }}</td>
+                            <td>{{ msg.recipient_name or '-' }}</td>
+                            <td>{{ msg.class_name or '-' }}</td>
+                            <td>{{ msg.created_at }}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-secondary" onclick="deleteMessage({{ msg.idNotification }})">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="messageFormModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeAddMessageForm()">&times;</span>
+                <h3>Envoyer un message</h3>
+                <form id="sendMessageForm" method="post" action="{{ url_for('send_message') }}">
+                    <div class="form-group">
+                        <label for="classification">Type de message:</label>
+                        <select id="classification" name="classification" required>
+                            <option value="note">Note</option>
+                            <option value="general_announcement">Annonce générale</option>
+                        </select>
+                    </div>
+                    <div id="recipientDiv" class="form-group">
+                        <label for="recipient_id">Destinataire:</label>
+                        <select id="recipient_id" name="recipient_id">
+                            {% for user in users %}
+                            <option value="{{ user.idUser }}">{{ user.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="classDiv" class="form-group" style="display:none;">
+                        <label for="class_name">Classe:</label>
+                        <select id="class_name" name="class_name">
+                            {% for class in classes %}
+                            <option value="{{ class }}">{{ class }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Description:</label>
+                        <textarea id="message" name="message" required></textarea>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddMessageForm()">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="sendMessagePopup" class="popup-message"></div>
+    </main>
+    <script src="{{ url_for('static', filename='sendMessage.js') }}"></script>
+</body>
+</html>

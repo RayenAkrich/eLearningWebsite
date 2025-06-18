@@ -297,6 +297,16 @@ tr:hover td {
   color: #004aad;
 }
 
+tr.unread {
+  background: #bebec1 ;
+  font-weight: 600;
+}
+
+tr.read {
+  background: #fff;
+  font-weight: 400;
+}
+
 /* Action Buttons */
 .action-btns {
   text-align: center;

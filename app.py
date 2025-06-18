@@ -950,16 +950,132 @@ def teacher_delete_session(session_id):
 def disconnect():
     return render_template('shared/disconnect/index.html')
 
-@app.route('/send-message', methods=['GET', 'POST'])
+def get_classes_and_users_for_message(role, user_id):
+    cursor = mysql.connection.cursor()
+    users = []
+    classes = []
+    all_classes = [
+        '1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique',
+        '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'
+    ]
+    if role == 'admin':
+        cursor.execute("SELECT idUser, nom FROM Users WHERE idUser != %s", (user_id,))
+        users = cursor.fetchall()
+        classes = ['Everyone'] + all_classes
+    elif role == 'teacher':
+        cursor.execute("SELECT speciality FROM Users WHERE idUser = %s", (user_id,))
+        teacher_speciality = cursor.fetchone()['speciality']
+        matieres_by_classe = {
+            'SVT': ['1er Année', '2eme Science', '3eme Science', '3eme Mathématiques', 'Bac Math', 'Bac science'],
+            'Arabe': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+            'Mathématique': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+            'Physique': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+            'Francais': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+            'Anglais':  ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+            'Technique': ['3eme Technique', 'Bac Technique'],
+            'Philosophie': ['3eme Science', '3eme Mathématiques', '3eme Technique', '3eme Informatique', 'Bac Info', 'Bac Technique', 'Bac Math', 'Bac science'],
+            'Informatique': ['1er Année', '2eme Science', '2eme Informatique', '3eme Science', '3eme Technique', '3eme Mathématiques', '3eme Informatique', 'Bac Math', 'Bac science', 'Bac Info', 'Bac Technique'],
+        }
+        allowed_classes = matieres_by_classe.get(teacher_speciality, [])
+        if allowed_classes:
+            cursor.execute("SELECT idUser, nom FROM Users WHERE roles='student' AND class IN %s", (tuple(allowed_classes),))
+            users = cursor.fetchall()
+        classes = allowed_classes
+    return users, classes
+
+@app.route('/sendMessage', methods=['GET', 'POST'])
 def send_message():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+    user_role = session['role']
+    cursor = mysql.connection.cursor()
+    # Sent messages by this user (as sender)
+    cursor.execute("""
+        SELECT n.idNotification, n.classification, n.message, n.created_at,
+               u.nom AS recipient_name, n.userId,
+               (SELECT class FROM Users WHERE idUser = n.userId) AS class_name
+        FROM Notifications n
+        LEFT JOIN Users u ON n.userId = u.idUser
+        WHERE n.related_id = %s
+        ORDER BY n.created_at DESC
+    """, (user_id,))
+    sent_messages = cursor.fetchall()
+    users, classes = get_classes_and_users_for_message(user_role, user_id)
     if request.method == 'POST':
-        # Handle the message sending logic here
-        pass
-    return render_template('shared/sendMessage/index.html')
+        classification = request.form['classification']
+        message = request.form['message']
+        created_at = datetime.now()
+        if classification == 'note':
+            recipient_id = request.form['recipient_id']
+            cursor.execute("""
+                INSERT INTO Notifications (userId, classification, message, created_at, related_id)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (recipient_id, classification, message, created_at, user_id))
+        else:  # general_announcement
+            class_name = request.form['class_name']
+            if class_name == 'Everyone':
+                cursor.execute("SELECT idUser FROM Users WHERE roles='student' OR roles='teacher'")
+            else:
+                cursor.execute("SELECT idUser FROM Users WHERE class=%s", (class_name,))
+            recipients = cursor.fetchall()
+            for r in recipients:
+                cursor.execute("""
+                    INSERT INTO Notifications (userId, classification, message, created_at, related_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (r['idUser'], classification, message, created_at, user_id))
+        mysql.connection.commit()
+        return redirect(url_for('send_message'))
+    return render_template('shared/sendMessage/index.html',
+                           sent_messages=sent_messages,
+                           users=users,
+                           classes=classes)
+
+@app.route('/delete_message/<int:notification_id>', methods=['POST'])
+def delete_message(notification_id):
+    if 'user_id' not in session:
+        abort(403)
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    # Only allow sender to delete their sent message
+    cursor.execute("DELETE FROM Notifications WHERE idNotification=%s AND related_id=%s", (notification_id, user_id))
+    mysql.connection.commit()
+    return '', 204
 
 @app.route('/notifications')
 def notifications():
-    return render_template('shared/notifications/index.html')
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT idNotification, classification, message, created_at, is_read
+        FROM Notifications
+        WHERE userId = %s
+        ORDER BY created_at DESC
+    """, (user_id,))
+    notifications = cursor.fetchall()
+    return render_template('shared/notifications/index.html', notifications=notifications)
+
+@app.route('/notifications/mark-as-read/<int:notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    if 'user_id' not in session:
+        return '', 403
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE Notifications SET is_read = TRUE WHERE idNotification = %s AND userId = %s", (notification_id, user_id))
+    mysql.connection.commit()
+    return '', 204
+
+@app.route('/notifications/delete/<int:notification_id>', methods=['POST'])
+def delete_notification(notification_id):
+    if 'user_id' not in session:
+        return '', 403
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM Notifications WHERE idNotification = %s AND userId = %s", (notification_id, user_id))
+    mysql.connection.commit()
+    return '', 204
 
 if __name__ == '__main__':
     app.run(debug=True)
