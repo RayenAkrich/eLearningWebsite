@@ -155,6 +155,7 @@ def delete_user(user_id):
     if not user:
         return jsonify({'success': False, 'message': 'Utilisateur introuvable.'})
     role = user['roles']
+    cursor.execute('DELETE FROM Notifications WHERE userId = %s OR related_id = %s', (user_id, user_id))
     if role == 'teacher':
         cursor.execute('DELETE FROM Courses WHERE idTeacher = %s', (user_id,))
         cursor.execute('DELETE FROM Exams WHERE idTeacher = %s', (user_id,))
@@ -507,13 +508,16 @@ def student_dashboard():
     # Nombre de séances pour la classe de l'étudiant
     cursor.execute('SELECT COUNT(*) as sessions FROM onlineSessions WHERE class = (SELECT class FROM Users WHERE idUser = %s)', (student_id,))
     sessions = cursor.fetchone()['sessions']
+    # Nombre de notifications non lues
+    cursor.execute('SELECT COUNT(*) as unread_notifications FROM Notifications WHERE userId = %s AND is_read = FALSE', (student_id,))
+    unread_notifications = cursor.fetchone()['unread_notifications']
     stats = {
         'courses': courses,
         'not_submitted_exams': not_submitted_exams,
         'answered_questions': answered_questions,
         'sessions': sessions
     }
-    return render_template('student/studentDashboard/dashboard.html', stats=stats)
+    return render_template('student/studentDashboard/dashboard.html', stats=stats, unread_notifications=unread_notifications)
 
 @app.route('/student/lessons')
 def student_lessons():
@@ -851,7 +855,8 @@ def teacher_add_grade():
     except Exception:
         return jsonify({'success': False, 'message': 'Note invalide.'})
     cursor = mysql.connection.cursor()
-    cursor.execute('UPDATE Submissions SET grade = %s WHERE idSubmission = %s', (grade, idSubmission))
+    # Convert grade to string for the query
+    cursor.execute('UPDATE Submissions SET grade = %s WHERE idSubmission = %s', (str(grade), idSubmission))
     mysql.connection.commit()
     return jsonify({'success': True, 'message': 'Note enregistrée.'})
 
@@ -1074,6 +1079,16 @@ def delete_notification(notification_id):
     user_id = session['user_id']
     cursor = mysql.connection.cursor()
     cursor.execute("DELETE FROM Notifications WHERE idNotification = %s AND userId = %s", (notification_id, user_id))
+    mysql.connection.commit()
+    return '', 204
+
+@app.route('/notifications/mark-all-as-read', methods=['POST'])
+def mark_all_notifications_as_read():
+    if 'user_id' not in session:
+        return '', 403
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE Notifications SET is_read = TRUE WHERE userId = %s", (user_id,))
     mysql.connection.commit()
     return '', 204
 

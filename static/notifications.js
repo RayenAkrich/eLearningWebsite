@@ -18,6 +18,18 @@ function markAsRead(id) {
     });
 }
 
+function markAllAsRead() {
+    confirmAction("Marquer toutes les notifications comme lues ?", async function() {
+        const res = await fetch(`/notifications/mark-all-as-read`, { method: 'POST' });
+        if (res.status === 204) {
+            showPopupMessage('Toutes les notifications sont marquées comme lues !', 'success');
+            setTimeout(() => { location.reload(); }, 1200);
+        } else {
+            showPopupMessage('Erreur lors de la mise à jour.', 'error');
+        }
+    });
+}
+
 function deleteNotification(id) {
     confirmAction("Êtes-vous sûr de vouloir supprimer cette notification ?", async function() {
         const res = await fetch(`/notifications/delete/${id}`, { method: 'POST' });
