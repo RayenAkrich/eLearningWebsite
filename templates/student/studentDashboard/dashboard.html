@@ -12,8 +12,7 @@
         <nav>
             <ul class="nav-links">
                 <li><a href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i>Accueil</a></li>
-                <li><a href="{{ url_for('student_lessons') }}"><i class="fas fa-book"></i>Cours</a></li>
-                <li><a href="{{ url_for('student_manage_exams') }}"><i class="fas fa-tasks"></i>Devoirs</a></li>
+                <li><a href="{{ url_for('student_subjects') }}"><i class="fas fa-layer-group"></i>Matières</a></li>
                 <li><a href="{{ url_for('student_manage_questions') }}"><i class="fas fa-question-circle"></i>Questions</a></li>
                 <li><a href="{{ url_for('student_online_sessions') }}"><i class="fas fa-video"></i>Séances en ligne</a></li>
                 <li><a href="{{ url_for('notifications') }}"><i class="fas fa-bell"></i>Notifications{% if unread_notifications and unread_notifications > 0 %} <span style="color:red;">({{ unread_notifications }})</span>{% endif %}</a></li>

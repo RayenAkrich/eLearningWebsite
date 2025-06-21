@@ -637,6 +637,48 @@ tr.read {
   box-shadow: 0 8px 25px rgba(0, 74, 173, 0.3);
 }
 
+.centered-btn-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.centered-btn-group .btn {
+  margin: 0 0.4rem;
+  border: 2px solid #007bff;
+  border-radius: 25px;
+  background: #fff;
+  color: #007bff;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.centered-btn-group .btn.active, .centered-btn-group .btn:hover {
+  background: #007bff;
+  color: #fff;
+  text-decoration: none;
+}
+
+.centered-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.centered-tabs .btn {
+  margin: 0 0.4rem;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.section-title {
+  text-align: center;
+  margin: 1.5rem 0 1rem 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
 /* Footer */
 .footer {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);

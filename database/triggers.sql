@@ -70,3 +70,24 @@ BEGIN
     END IF;
 END$$
 DELIMITER ;
+
+-- Trigger: Notify students when a new lesson is added for their class/subject
+drop trigger trg_new_lesson_notify;
+DELIMITER $$
+CREATE TRIGGER trg_new_lesson_notify
+AFTER INSERT ON Courses
+FOR EACH ROW
+BEGIN
+    DECLARE teacher_speciality VARCHAR(100);
+    -- Get the teacher's speciality
+    SELECT speciality INTO teacher_speciality FROM Users WHERE idUser = NEW.idTeacher;
+
+    -- Notify all students in the same class as the new lesson, show the teacher's speciality in the message
+    INSERT INTO Notifications (userId, classification, message, is_read, created_at, related_id)
+    SELECT U.idUser, 'new_lesson',
+        CONCAT('Une nouvelle leçon de ', NEW.title, ' (', teacher_speciality, ' - ', NEW.descrp, ') a été ajoutée.'),
+        FALSE, NOW(), NEW.idCourse
+    FROM Users U
+    WHERE U.role = 'student' AND U.class = NEW.class;
+END$$
+DELIMITER ;

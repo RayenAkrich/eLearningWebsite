@@ -1092,5 +1092,72 @@ def mark_all_notifications_as_read():
     mysql.connection.commit()
     return '', 204
 
+@app.route('/student/subjects')
+def student_subjects():
+    if session.get('role') != 'student':
+        return redirect(url_for('login'))
+    student_id = session.get('user_id')
+    cursor = mysql.connection.cursor()
+    # Get student class
+    cursor.execute('SELECT class FROM Users WHERE idUser = %s', (student_id,))
+    student_class = cursor.fetchone()['class']
+    # Subjects by class
+    matieres_by_classe = {
+        '1er Année': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Informatique'],
+        '2eme Science': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Informatique'],
+        '2eme Informatique': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Informatique'],
+        '3eme Science': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Philosophie', 'Informatique'],
+        '3eme Technique': ['Technique','Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie', 'Informatique'],
+        '3eme Mathématiques': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie', 'SVT', 'Informatique'],
+        '3eme Informatique': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Informatique', 'Philosophie'],
+        'Bac Math': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie', 'Informatique', 'SVT'],
+        'Bac science': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'SVT', 'Philosophie', 'Informatique'],
+        'Bac Info': ['Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Informatique', 'Philosophie'],
+        'Bac Technique': ['Technique','Mathématique', 'Physique', 'Francais', 'Arabe', 'Anglais', 'Philosophie']
+    }
+    matieres = matieres_by_classe.get(student_class, [])
+    selected_subject = request.args.get('subject')
+    show = request.args.get('show', 'lessons')
+    lessons = []
+    exams = []
+    submitted_exam_ids = set()
+    if selected_subject:
+        # Lessons for this subject/class
+        cursor.execute('''
+            SELECT C.idCourse, U.nom as teacher_name, C.title, C.class, U.speciality, C.descrp, C.file_path, C.created_at
+            FROM Courses C
+            JOIN Users U ON U.idUser = C.idTeacher
+            WHERE C.class = %s AND U.speciality = %s
+        ''', (student_class, selected_subject))
+        lessons = cursor.fetchall()
+        # Exams for this subject/class
+        cursor.execute('''
+            SELECT U.nom as teacher_name, E.idExam, E.speciality, E.class, E.descrp, E.created_at, E.deadline, E.file_path, E.file_path_corr
+            FROM Exams E
+            JOIN Users U ON U.idUser = E.idTeacher
+            WHERE E.class = %s AND E.speciality = %s
+            ORDER BY E.created_at DESC
+        ''', (student_class, selected_subject))
+        exams = cursor.fetchall()
+        # Submitted exams
+        cursor.execute('SELECT idExam FROM Submissions WHERE idStudent = %s', (student_id,))
+        submitted_exam_ids = set(row['idExam'] for row in cursor.fetchall())
+        # Format deadlines
+        for exam in exams:
+            if exam['deadline'] and not isinstance(exam['deadline'], str):
+                exam['deadline'] = exam['deadline'].strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return render_template(
+        'student/subjects/index.html',
+        matieres=matieres,
+        selected_subject=selected_subject,
+        show=show,
+        lessons=lessons,
+        exams=exams,
+        submitted_exam_ids=submitted_exam_ids,
+        now=now
+    )
+
 if __name__ == '__main__':
     app.run(debug=True)
