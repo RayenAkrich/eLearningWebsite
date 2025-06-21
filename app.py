@@ -210,6 +210,8 @@ def admin_delete_lesson(lesson_id):
         file_path = os.path.join(app.root_path, row['file_path'])
         if os.path.exists(file_path):
             os.remove(file_path)
+    # Supprimer les notifications liées à la leçon
+    cursor.execute('DELETE FROM Notifications WHERE related_id = %s AND classification = "new_lesson"', (lesson_id,))
     # Supprimer la leçon de la base
     cursor.execute('DELETE FROM Courses WHERE idCourse = %s', (lesson_id,))
     mysql.connection.commit()
@@ -228,6 +230,14 @@ def admin_delete_exam(exam_id):
             file_path = os.path.join(app.root_path, row['file_path'])
             if os.path.exists(file_path):
                 os.remove(file_path)
+    # Supprimer les notifications liées à l'examen
+    cursor.execute('DELETE FROM Notifications WHERE related_id = %s AND (classification = "new_exam" OR classification = "grade" OR classification = "feedback")', (exam_id,))
+    # Supprimer les notifications liées aux soumissions de cet examen
+    cursor.execute('SELECT idSubmission FROM Submissions WHERE idExam = %s', (exam_id,))
+    submission_ids = [row['idSubmission'] for row in cursor.fetchall()]
+    if submission_ids:
+        format_strings = ','.join(['%s'] * len(submission_ids))
+        cursor.execute(f'DELETE FROM Notifications WHERE related_id IN ({format_strings}) AND (classification = "grade" OR classification = "feedback")', tuple(submission_ids))
     # Supprimer les soumissions liées à cet examen
     cursor.execute('DELETE FROM Submissions WHERE idExam = %s', (exam_id,))
     # Récupérer les chemins des fichiers de l'examen avant suppression
@@ -280,11 +290,20 @@ def teacher_dashboard():
     pending_questions = cursor.fetchone()['pending_questions']
     cursor.execute('SELECT COUNT(*) as sessions FROM onlineSessions WHERE idTeacher = %s', (teacher_id,))
     sessions = cursor.fetchone()['sessions']
+    # Count ungraded submissions for this teacher's exams
+    cursor.execute('''
+        SELECT COUNT(*) as ungraded_submissions
+        FROM Submissions s
+        JOIN Exams e ON s.idExam = e.idExam
+        WHERE e.idTeacher = %s AND s.grade IS NULL
+    ''', (teacher_id,))
+    ungraded_submissions = cursor.fetchone()['ungraded_submissions']
     stats = {
         'courses': courses,
         'exams': exams,
         'pending_questions': pending_questions,
-        'sessions': sessions
+        'sessions': sessions,
+        'ungraded_submissions': ungraded_submissions
     }
     return render_template('teacher/teacherDashboard/dashboard.html', stats=stats)
 
@@ -354,6 +373,14 @@ def teacher_delete_exam(exam_id):
             file_path = os.path.join(app.root_path, row['file_path'])
             if os.path.exists(file_path):
                 os.remove(file_path)
+    # Supprimer les notifications liées à l'examen
+    cursor.execute('DELETE FROM Notifications WHERE related_id = %s AND (classification = "new_exam" OR classification = "grade" OR classification = "feedback")', (exam_id,))
+    # Supprimer les notifications liées aux soumissions de cet examen
+    cursor.execute('SELECT idSubmission FROM Submissions WHERE idExam = %s', (exam_id,))
+    submission_ids = [row['idSubmission'] for row in cursor.fetchall()]
+    if submission_ids:
+        format_strings = ','.join(['%s'] * len(submission_ids))
+        cursor.execute(f'DELETE FROM Notifications WHERE related_id IN ({format_strings}) AND (classification = "grade" OR classification = "feedback")', tuple(submission_ids))
     # Supprimer les soumissions liées à cet examen
     cursor.execute('DELETE FROM Submissions WHERE idExam = %s', (exam_id,))
     # Récupérer les chemins des fichiers de l'examen avant suppression
@@ -455,6 +482,8 @@ def teacher_delete_lesson(lesson_id):
         file_path = os.path.join(app.root_path, row['file_path'])
         if os.path.exists(file_path):
             os.remove(file_path)
+    # Supprimer les notifications liées à la leçon
+    cursor.execute('DELETE FROM Notifications WHERE related_id = %s AND classification = "new_lesson"', (lesson_id,))
     # Supprimer la leçon de la base
     cursor.execute('DELETE FROM Courses WHERE idCourse = %s AND idTeacher = %s', (lesson_id, teacher_id))
     mysql.connection.commit()
@@ -727,6 +756,8 @@ def admin_delete_submission(submission_id):
         file_path = os.path.join(app.root_path, row['file_path'])
         if os.path.exists(file_path):
             os.remove(file_path)
+    # Supprimer les notifications liées à la soumission (grade, feedback)
+    cur.execute('DELETE FROM Notifications WHERE related_id = %s AND (classification = "grade" OR classification = "feedback")', (submission_id,))
     cur.execute('DELETE FROM Submissions WHERE idSubmission = %s', (submission_id,))
     mysql.connection.commit()
     cur.close()

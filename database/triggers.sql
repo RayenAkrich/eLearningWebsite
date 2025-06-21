@@ -88,6 +88,6 @@ BEGIN
         CONCAT('Une nouvelle leçon de ', NEW.title, ' (', teacher_speciality, ' - ', NEW.descrp, ') a été ajoutée.'),
         FALSE, NOW(), NEW.idCourse
     FROM Users U
-    WHERE U.role = 'student' AND U.class = NEW.class;
+    WHERE U.roles = 'student' AND U.class = NEW.class;
 END$$
 DELIMITER ;
