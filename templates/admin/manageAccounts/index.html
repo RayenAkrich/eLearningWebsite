@@ -27,6 +27,7 @@
                             <th onclick="sortTable('loginRequestTable', {{ loop.index0 }})">{{ title }}</th>
                             {% endfor %}
                             <th>Actions</th>
+                            <th><th>
                         </tr>
                     </thead>
                     <tbody>
@@ -37,6 +38,8 @@
                             {% endfor %}
                             <td class="action-btns">
                                 <button class="btn btn-secondary" onclick="validateRequest({{ req['idRequest'] }})">Valider</button>
+                            </td>
+                            <td class="action-btns">
                                 <button class="btn btn-secondary" onclick="deleteRequest({{ req['idRequest'] }})">Supprimer</button>
                             </td>
                         </tr>
