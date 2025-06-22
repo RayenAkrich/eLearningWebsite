@@ -15,7 +15,7 @@ CREATE TABLE Users (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reset_token VARCHAR(255), 
     reset_token_expiry DATETIME
-) ENGINE=InnoDB;
+);
 
 -- Table loginRequest
 CREATE TABLE loginRequest (
@@ -27,7 +27,7 @@ CREATE TABLE loginRequest (
     roles ENUM('teacher', 'student') NOT NULL,
     class VARCHAR(50), 
     speciality VARCHAR(50)
-) ENGINE=InnoDB;
+);
 
 -- Table onlineSessions
 CREATE TABLE onlineSessions (
@@ -39,7 +39,7 @@ CREATE TABLE onlineSessions (
     descrp TEXT,
     link VARCHAR(255), 
     FOREIGN KEY (idTeacher) REFERENCES Users(idUser) ON DELETE CASCADE
-) ENGINE=InnoDB;
+);
 
 -- Table Questions
 CREATE TABLE Questions (
@@ -54,7 +54,7 @@ CREATE TABLE Questions (
     idResponder INT,
     FOREIGN KEY (idStudent) REFERENCES Users(idUser) ON DELETE CASCADE,
     FOREIGN KEY (idResponder) REFERENCES Users(idUser) ON DELETE SET NULL
-) ENGINE=InnoDB;
+);
 
 -- Table Exams
 CREATE TABLE Exams (
@@ -68,7 +68,7 @@ CREATE TABLE Exams (
     file_path VARCHAR(255), 
 	file_path_corr VARCHAR(255), 
     FOREIGN KEY (idTeacher) REFERENCES Users(idUser) ON DELETE CASCADE
-) ENGINE=InnoDB;
+);
 
 -- Table Submissions
 CREATE TABLE Submissions (
@@ -81,7 +81,7 @@ CREATE TABLE Submissions (
     feedback TEXT, 
     FOREIGN KEY (idExam) REFERENCES Exams(idExam) ON DELETE CASCADE,
     FOREIGN KEY (idStudent) REFERENCES Users(idUser) ON DELETE CASCADE
-) ENGINE=InnoDB;
+);
 
 -- Table Courses
 CREATE TABLE Courses (
@@ -93,7 +93,7 @@ CREATE TABLE Courses (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     file_path VARCHAR(255),
     FOREIGN KEY (idTeacher) REFERENCES Users(idUser) ON DELETE CASCADE
-) ENGINE=InnoDB;
+);
 
 -- Table Notifications
 CREATE TABLE Notifications (
@@ -105,7 +105,7 @@ CREATE TABLE Notifications (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     related_id INT,
     FOREIGN KEY (userId) REFERENCES Users(idUser) ON DELETE CASCADE
-) ENGINE=InnoDB;
+);
 
 use elearningdb;
 -- Mot de passe admin inséré hachée
