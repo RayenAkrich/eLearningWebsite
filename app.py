@@ -947,8 +947,13 @@ def get_classes_and_users_for_message(role, user_id):
         }
         allowed_classes = matieres_by_classe.get(teacher_speciality, [])
         if allowed_classes:
+            # Get students in allowed classes
             cursor.execute("SELECT idUser, nom FROM Users WHERE roles='student' AND class IN %s", (tuple(allowed_classes),))
             users = cursor.fetchall()
+            # Add all admins to the users list
+            cursor.execute("SELECT idUser, nom FROM Users WHERE roles='admin'")
+            admins = cursor.fetchall()
+            users.extend(admins)
         classes = allowed_classes
     return users, classes
 
