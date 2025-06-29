@@ -1,5 +1,0 @@
-Flask
-flask-mysqldb
-mysqlclient
-Werkzeug
-gunicorn
